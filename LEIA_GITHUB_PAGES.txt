@@ -1,0 +1,53 @@
+GITHUB PAGES X NETLIFY
+
+O erro da imagem acontece na etapa "Deploy to GitHub Pages".
+O build passou; quem falhou foi a ativacao/publicacao do Pages.
+
+IMPORTANTE:
+GitHub Pages publica apenas arquivos estaticos.
+Ele NAO executa a pasta netlify/functions.
+
+Entao:
+
+1. Se voce precisa de sincronizacao PC/celular:
+   Use Netlify ou Vercel.
+   O GitHub pode guardar o codigo, mas o site deve ser publicado por uma plataforma que rode API/funcoes.
+
+2. Se voce quer apenas abrir o sistema estatico, sem sincronizacao:
+   GitHub Pages pode servir.
+   Eu deixei um workflow em:
+   .github/workflows/deploy-pages.yml
+
+PASSOS PARA NETLIFY COM GITHUB:
+
+1. Suba esta pasta outputs inteira para o GitHub.
+2. No Netlify, escolha "Import from Git".
+3. Se no GitHub os arquivos estiverem dentro da pasta outputs:
+   - Base directory: outputs
+   - Publish directory: .
+   - Functions directory: netlify/functions
+4. Se no GitHub o conteudo de outputs estiver na raiz:
+   - Base directory: vazio
+   - Publish directory: .
+   - Functions directory: netlify/functions
+5. Crie a variavel MAOS_AMIGAS_SYNC_TOKEN no Netlify.
+6. Faca deploy.
+
+PASSOS PARA VERCEL COM GITHUB:
+
+1. Suba esta pasta outputs inteira para o GitHub.
+2. No Vercel, escolha Add New > Project e importe o repositorio.
+3. Se os arquivos estiverem dentro da pasta outputs:
+   - Root Directory: outputs
+   - Framework Preset: Other
+   - Output Directory: .
+4. Crie/conecte um Redis/Upstash no Vercel Storage.
+5. Configure MAOS_AMIGAS_SYNC_TOKEN no Vercel.
+6. Faca deploy.
+
+PASSOS PARA TENTAR GITHUB PAGES:
+
+1. Va em Settings > Pages.
+2. Em Build and deployment, selecione GitHub Actions.
+3. Va em Actions e rode novamente o workflow.
+4. Se aparecer "Deployment failed, try again later", clique em "Re-run failed jobs".

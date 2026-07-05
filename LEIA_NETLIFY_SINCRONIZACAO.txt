@@ -1,0 +1,24 @@
+PASSOS PARA PC E CELULAR USAREM A MESMA BASE
+
+1. No Netlify, publique a pasta outputs inteira.
+   Nao publique somente o arquivo HTML, porque a sincronizacao usa tambem:
+   - netlify/functions/maos-amigas-sync.mjs
+   - package.json
+   - netlify.toml
+
+2. No painel do Netlify, crie uma variavel de ambiente:
+   MAOS_AMIGAS_SYNC_TOKEN
+
+3. Coloque nela um codigo forte, por exemplo:
+   MaosAmigas-2026-seu-codigo
+
+4. Faca um novo deploy depois de criar a variavel.
+
+5. Abra o sistema no PC e no celular.
+   Em Dashboard > Configurar sincronizacao, digite o mesmo codigo.
+
+6. No primeiro aparelho que ja tem os dados corretos, clique em "Enviar para nuvem".
+   No outro aparelho, clique em "Baixar da nuvem" ou "Sincronizar agora".
+
+Observacao: sem essa funcao publicada no Netlify, o navegador salva os dados apenas no proprio aparelho.
+

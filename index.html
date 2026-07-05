@@ -1,0 +1,2566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plantões &amp; Visitas — Gestão de Cuidadores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg: #F3F5F2;
+  --surface: #FFFFFF;
+  --surface-2: #F9FAF8;
+  --ink: #16211E;
+  --muted: #5C6B65;
+  --border: #DEE4DE;
+  --primary: #0E4A44;
+  --primary-2: #156C63;
+  --primary-tint: #E4EEEC;
+  --accent: #C17A2E;
+  --accent-tint: #F6E9D6;
+  --danger: #B8412F;
+  --danger-tint: #F7E4DF;
+  --warn: #B4862A;
+  --warn-tint: #F5EBD4;
+  --ok: #2E7D53;
+  --ok-tint: #E1F0E6;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(15,30,26,0.06), 0 6px 20px -8px rgba(15,30,26,0.12);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Manrope',sans-serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ---------- Layout ---------- */
+.app{display:flex;min-height:100vh;}
+.sidebar{
+  width:230px;flex-shrink:0;background:var(--primary);
+  color:#EAF4F1;display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;
+}
+.brand{padding:22px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.12);}
+.brand-mark{
+  font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;letter-spacing:0.2px;
+  display:flex;align-items:center;gap:8px;
+}
+.brand-mark .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block;}
+.brand-sub{font-size:12px;color:#B9D8D1;margin-top:4px;}
+.nav{padding:14px 10px;display:flex;flex-direction:column;gap:2px;flex:1;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+  color:#D8ECE7;text-decoration:none;font-size:14px;font-weight:600;cursor:pointer;
+  border:none;background:transparent;text-align:left;width:100%;
+}
+.nav-item:hover{background:rgba(255,255,255,0.08);}
+.nav-item.active{background:rgba(255,255,255,0.16);color:#fff;}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;}
+.nav-foot{padding:14px 16px 20px;font-size:11px;color:#9BC2BA;border-top:1px solid rgba(255,255,255,0.1);}
+.nav-foot button{
+  width:100%;margin-top:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  color:#EAF4F1;padding:8px 10px;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600;
+}
+.nav-foot button:hover{background:rgba(255,255,255,0.16);}
+.sync-card{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:12px 14px;margin-bottom:18px;}
+.sync-info{display:flex;align-items:center;gap:10px;min-width:220px;}
+.sync-dot{width:10px;height:10px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px rgba(180,134,42,.13);flex-shrink:0;}
+.sync-dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(46,125,83,.13);}
+.sync-dot.off{background:var(--muted);box-shadow:0 0 0 4px rgba(92,107,101,.12);}
+.sync-title{font-weight:800;color:var(--ink);font-size:13.5px;}
+.sync-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.sync-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.sync-modal-status{border:1px solid var(--border);border-radius:10px;background:var(--surface-2);padding:12px;margin:10px 0;font-size:13px;color:var(--muted);}
+.sync-modal-status strong{display:block;color:var(--ink);margin-bottom:4px;}
+
+.main{flex:1;min-width:0;}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 30px;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:5;
+}
+.topbar h1{font-size:20px;margin:0;font-weight:800;}
+.topbar .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+.content{padding:26px 30px 60px;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;border-radius:8px;
+  padding:9px 15px;border:1px solid transparent;cursor:pointer;display:inline-flex;
+  align-items:center;gap:6px;transition:transform .05s ease;
+}
+.btn:active{transform:scale(0.98);}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-2);}
+.btn-ghost{background:var(--surface);color:var(--ink);border-color:var(--border);}
+.btn-ghost:hover{background:var(--surface-2);}
+.btn-danger{background:var(--danger-tint);color:var(--danger);}
+.btn-danger:hover{background:#f0cfc6;}
+.btn-sm{padding:5px 9px;font-size:12px;border-radius:6px;}
+.icon-btn{background:transparent;border:none;cursor:pointer;padding:5px;border-radius:6px;color:var(--muted);}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink);}
+
+/* ---------- Cards / Dashboard ---------- */
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:22px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);}
+.card .label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.card .value{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;margin-top:6px;color:var(--ink);}
+.card.accent .value{color:var(--primary);}
+.card.warn .value{color:var(--warn);}
+.card.danger .value{color:var(--danger);}
+.card .hint{font-size:11.5px;color:var(--muted);margin-top:4px;}
+
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px;}
+.section-title h2{font-size:15px;font-weight:800;margin:0;}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.panel-pad{padding:18px 20px;}
+
+/* how-to */
+.howto{list-style:none;margin:0;padding:0;counter-reset:step;}
+.howto li{counter-increment:step;position:relative;padding:8px 0 8px 34px;font-size:13.5px;color:var(--ink);border-bottom:1px solid var(--border);}
+.howto li:last-child{border-bottom:none;}
+.howto li::before{
+  content:counter(step);position:absolute;left:0;top:6px;width:22px;height:22px;border-radius:50%;
+  background:var(--primary-tint);color:var(--primary);font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+  font-weight:600;display:flex;align-items:center;justify-content:center;
+}
+
+/* month picker */
+.month-picker{display:flex;align-items:center;gap:8px;}
+.month-picker input{border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-family:'Inter';font-size:13.5px;background:var(--surface);}
+
+/* ---------- Tables ---------- */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.search-input{border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13.5px;font-family:'Inter';width:240px;background:var(--surface-2);}
+.search-input:focus{outline:2px solid var(--primary-tint);border-color:var(--primary-2);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;}
+thead th{
+  text-align:left;padding:10px 14px;background:var(--surface-2);color:var(--muted);
+  font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;
+  border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;
+}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;}
+tbody tr:hover{background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+.cell-actions{display:flex;gap:4px;}
+.empty-row td{text-align:center;color:var(--muted);padding:40px 20px;white-space:normal;}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap;}
+.pill-ok{background:var(--ok-tint);color:var(--ok);}
+.pill-warn{background:var(--warn-tint);color:var(--warn);}
+.pill-danger{background:var(--danger-tint);color:var(--danger);}
+.pill-neutral{background:var(--primary-tint);color:var(--primary);}
+.pill-muted{background:#EFEFEC;color:var(--muted);}
+
+/* rest timeline signature element */
+.rest-bar{display:flex;align-items:center;gap:2px;height:8px;width:110px;border-radius:5px;overflow:hidden;background:#EDEFEB;}
+.rest-bar .seg{height:100%;}
+.rest-legend{font-size:11px;color:var(--muted);}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,25,22,0.45);display:flex;align-items:flex-start;
+  justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50;
+}
+.modal-overlay.hidden{display:none;}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:860px;box-shadow:0 20px 60px -12px rgba(0,0,0,0.35);}
+.modal.modal-wide{max-width:1040px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
+.modal-header h3{margin:0;font-size:16px;font-weight:800;}
+.modal-body{padding:20px 22px;}
+.modal-close{background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-field.full{grid-column:1/-1;}
+.form-field label{font-size:12px;font-weight:700;color:var(--muted);}
+.form-field input,.form-field select,.form-field textarea{
+  border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:'Inter';font-size:13.5px;
+  background:var(--surface-2);color:var(--ink);
+}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:2px solid var(--primary-tint);border-color:var(--primary-2);}
+.form-field .helper{font-size:11px;color:var(--muted);}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+.badge-auto{font-size:10.5px;color:var(--primary-2);font-weight:700;background:var(--primary-tint);padding:1px 7px;border-radius:5px;}
+
+.calc-panel{margin-bottom:18px;}
+.calc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.calc-head h2{font-size:15px;font-weight:800;margin:0;}
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+.calc-checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.calc-checks label{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--surface-2);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;color:var(--muted);}
+.calc-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px;}
+.calc-result{border:1px solid var(--border);background:var(--surface-2);border-radius:8px;padding:10px 12px;}
+.calc-result span{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);}
+.calc-result strong{display:block;margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--ink);}
+.calc-result.primary strong{color:var(--primary);}
+.visit-clinical{grid-column:1/-1;border-top:1px solid var(--border);padding-top:14px;margin-top:4px;}
+.visit-clinical h4{font-family:'Manrope',sans-serif;font-size:14px;margin:0 0 10px;font-weight:800;}
+.visit-clinical-sub{font-size:12px;color:var(--muted);margin:-4px 0 12px;}
+.visit-block{grid-column:1/-1;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);padding:12px;margin-top:4px;}
+.visit-block h5{font-family:'Manrope',sans-serif;font-size:13px;margin:0 0 8px;font-weight:800;color:var(--ink);}
+.soap-import textarea{min-height:110px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.45;}
+.visit-accordion{grid-column:1/-1;border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden;margin-top:8px;}
+.visit-accordion summary{list-style:none;cursor:pointer;padding:13px 15px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.visit-accordion summary::-webkit-details-marker{display:none;}
+.visit-accordion summary::after{content:"+";font-size:18px;color:var(--muted);line-height:1;}
+.visit-accordion[open] summary{border-bottom:1px solid var(--border);background:var(--surface-2);}
+.visit-accordion[open] summary::after{content:"−";}
+.visit-accordion-body{padding:14px 15px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.visit-accordion-body .visit-block{background:var(--surface);margin-top:0;}
+.quick-actions{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 10px;}
+.quick-actions button{border:1px solid var(--border);background:var(--surface);color:var(--primary);border-radius:999px;padding:6px 10px;font-size:11.5px;font-weight:800;cursor:pointer;}
+.quick-actions button:hover{background:var(--primary-tint);}
+.dynamic-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;background:var(--surface);}
+.dynamic-table{min-width:780px;}
+.dynamic-table th{position:static;}
+.dynamic-table td{white-space:normal;padding:8px;}
+.dynamic-table input,.dynamic-table select{width:100%;border:1px solid var(--border);border-radius:7px;padding:7px 8px;font-family:'Inter';font-size:12.5px;background:var(--surface-2);color:var(--ink);}
+.dynamic-table .row-remove{white-space:nowrap;text-align:right;width:72px;}
+.visit-note{font-size:11.5px;color:var(--muted);margin-top:8px;}
+.scale-card{display:none;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:12px;margin-top:10px;}
+.scale-card.active{display:block;}
+.scale-card h6{font-family:'Manrope',sans-serif;font-size:13px;margin:0 0 4px;font-weight:800;color:var(--primary);}
+.scale-ref{font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.45;}
+.scale-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;}
+.scale-result{margin-top:10px;border-radius:8px;background:var(--primary-tint);color:var(--primary);padding:9px 10px;font-size:12px;font-weight:800;line-height:1.45;}
+.scale-result.warn{background:var(--warn-tint);color:var(--warn);}
+.scale-result.danger{background:var(--danger-tint);color:var(--danger);}
+.patient-link{border:none;background:transparent;color:var(--primary);font:inherit;font-weight:800;padding:0;cursor:pointer;text-align:left;}
+.patient-link:hover{text-decoration:underline;}
+.prontuario-head{display:grid;grid-template-columns:1.2fr .8fr;gap:12px;margin-bottom:14px;}
+.prontuario-box{border:1px solid var(--border);background:var(--surface-2);border-radius:10px;padding:12px;}
+.prontuario-box h4{font-family:'Manrope',sans-serif;margin:0 0 8px;font-size:14px;}
+.prontuario-timeline{display:flex;flex-direction:column;gap:10px;}
+.prontuario-event{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface);}
+.prontuario-event h5{margin:0 0 6px;font-family:'Manrope',sans-serif;font-size:13px;}
+.prontuario-event pre{white-space:pre-wrap;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px;max-height:240px;overflow:auto;}
+.visit-soap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+.visit-soap-grid .form-field textarea{min-height:130px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.45;}
+.visit-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;grid-column:1/-1;}
+.visit-soap-grid{grid-column:1/-1;}
+
+@media (max-width:880px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s ease;z-index:40;}
+  .sidebar.open{transform:translateX(0);}
+  .menu-toggle{display:inline-flex !important;}
+  .form-grid{grid-template-columns:1fr;}
+  .visit-accordion-body{grid-template-columns:1fr;}
+  .visit-soap-grid{grid-template-columns:1fr;}
+  .sync-card{align-items:flex-start;}
+  .sync-actions{width:100%;}
+  .sync-actions .btn{flex:1;justify-content:center;}
+}
+.menu-toggle{display:none;background:transparent;border:1px solid var(--border);border-radius:8px;padding:7px 9px;cursor:pointer;}
+
+/* ---------- Exportar Serviço ---------- */
+.export-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.export-item{background:var(--surface);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.export-item-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.export-item-title{font-weight:700;font-size:13.5px;}
+.export-item-sub{font-size:12px;color:var(--muted);}
+.export-empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:13.5px;}
+
+.card-modal-overlay .modal{max-width:460px;}
+.service-card-wrap{display:flex;justify-content:center;padding:4px 0 16px;}
+.service-card{
+  width:380px;border-radius:16px;overflow:hidden;background:var(--surface);
+  border:1px solid var(--border);box-shadow:0 10px 30px -10px rgba(15,30,26,0.25);
+  font-family:'Inter',sans-serif;
+}
+.sc-header{
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;
+  padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.sc-kind{font-family:'Manrope',sans-serif;font-weight:800;font-size:14.5px;display:flex;align-items:center;gap:7px;}
+.sc-date-badge{font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(255,255,255,0.18);padding:4px 9px;border-radius:6px;}
+.sc-body{padding:18px 20px 8px;}
+.sc-patient{font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;color:var(--ink);margin-bottom:2px;}
+.sc-patient-sub{font-size:12.5px;color:var(--muted);margin-bottom:14px;}
+.sc-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:7px 0;font-size:13px;}
+.sc-label{color:var(--muted);font-weight:600;flex-shrink:0;}
+.sc-value{text-align:right;font-weight:600;color:var(--ink);}
+.sc-value.mono{font-family:'IBM Plex Mono',monospace;}
+.sc-divider{height:1px;background:var(--border);margin:8px 0;}
+.sc-money-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;}
+.sc-money-label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.sc-money-value{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:20px;color:var(--primary);}
+.sc-status-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.sc-footer{padding:12px 20px 18px;font-size:10.5px;color:var(--muted);text-align:center;border-top:1px solid var(--border);margin-top:4px;padding-top:12px;}
+.card-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.calendar-shell{display:flex;flex-direction:column;gap:14px;}
+.calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.calendar-title{font-family:'Manrope',sans-serif;font-size:18px;font-weight:800;text-transform:capitalize;}
+.calendar-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.calendar-nav input{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'Inter';font-size:13.5px;background:var(--surface);}
+.calendar-legend{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--warn);}
+.legend-dot.paid{background:var(--ok);}
+.legend-dot.received{background:var(--primary-2);}
+.legend-dot.cancelled{background:var(--danger);}
+.calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(116px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.calendar-weekdays{margin-bottom:-14px;border-bottom:none;}
+.calendar-weekdays div{background:var(--surface-2);padding:9px 10px;font-size:11px;font-weight:800;text-transform:uppercase;color:var(--muted);}
+.calendar-day{min-height:146px;background:var(--surface);padding:10px;display:flex;flex-direction:column;gap:7px;}
+.calendar-day.today{box-shadow:inset 0 0 0 2px var(--primary-2);}
+.calendar-day-number{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--muted);}
+.calendar-event{border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:8px;padding:8px;background:var(--surface-2);font-size:12px;line-height:1.35;}
+.calendar-event.paid,.calendar-event.done{border-left-color:var(--ok);background:var(--ok-tint);}
+.calendar-event.received{border-left-color:var(--primary-2);}
+.calendar-event.cancelled{border-left-color:var(--danger);background:var(--danger-tint);}
+.calendar-event-title{font-weight:800;color:var(--ink);margin-bottom:2px;}
+.calendar-event-meta{color:var(--muted);}
+.calendar-event-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px;}
+.calendar-check{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--primary);cursor:pointer;}
+.calendar-empty{color:var(--muted);font-size:12px;margin-top:auto;}
+@media(max-width:980px){.calendar-weekdays,.calendar-grid{grid-template-columns:1fr}.calendar-weekdays{display:none}.calendar-day{min-height:auto}.calendar-day::before{content:attr(data-weekday);font-size:11px;text-transform:uppercase;font-weight:800;color:var(--muted)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span class="dot"></span>Plantões &amp; Visitas</div>
+      <div class="brand-sub">Gestão de cuidadores</div>
+    </div>
+    <nav class="nav" id="navList">
+      <button class="nav-item active" data-view="dashboard">📊 Dashboard</button>
+      <button class="nav-item" data-view="calendario">📅 Calendário</button>
+      <button class="nav-item" data-view="plantoes">🕐 Plantões</button>
+      <button class="nav-item" data-view="visitas">🏠 Visitas</button>
+      <button class="nav-item" data-view="profissionais">🧑‍⚕️ Profissionais</button>
+      <button class="nav-item" data-view="pacientes">🗂️ Pacientes</button>
+      <button class="nav-item" data-view="exportar">📤 Exportar Serviço</button>
+    </nav>
+    <div class="nav-foot">
+      Dados salvos automaticamente neste navegador.
+      <button id="btnSyncSidebar">Sincronização</button>
+      <button id="btnExport">Exportar backup (.json)</button>
+      <button id="btnImport">Importar backup</button>
+      <input type="file" id="fileImport" accept=".json" style="display:none">
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <div class="sub" id="pageSub">Resumo mensal, alertas de escala 12/36 e agenda de visitas.</div>
+        </div>
+      </div>
+      <div id="topbarAction"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+          <div class="month-picker">
+            <label for="mesReferencia" style="font-size:13px;font-weight:600;color:var(--muted);">Mês de referência</label>
+            <input type="month" id="mesReferencia">
+          </div>
+        </div>
+
+        <div class="sync-card">
+          <div class="sync-info">
+            <span class="sync-dot off" id="syncDot"></span>
+            <div>
+              <div class="sync-title" id="syncTitle">Dados somente neste aparelho</div>
+              <div class="sync-sub" id="syncSub">PC e celular não compartilham dados até ativar a sincronização.</div>
+            </div>
+          </div>
+          <div class="sync-actions">
+            <button class="btn btn-primary" id="btnOpenSync" type="button">Configurar sincronização</button>
+            <button class="btn btn-ghost" id="btnSyncNow" type="button">Sincronizar agora</button>
+          </div>
+        </div>
+
+        <div class="grid-cards" id="cardsRow1"></div>
+        <div class="grid-cards" id="cardsRow2"></div>
+        <div class="grid-cards" id="cardsRow3"></div>
+
+        <div class="section-title"><h2>Como usar</h2></div>
+        <div class="panel panel-pad">
+          <ol class="howto">
+            <li>Cadastre os cuidadores na aba <strong>Profissionais</strong>.</li>
+            <li>Cadastre pacientes e responsáveis na aba <strong>Pacientes</strong>.</li>
+            <li>Em <strong>Plantões</strong>, selecione profissional e paciente — CPF, telefone e valores são preenchidos automaticamente.</li>
+            <li>Lance os plantões em ordem cronológica para o alerta 12/36 funcionar corretamente.</li>
+            <li>Em <strong>Visitas</strong>, selecione paciente/profissional para agendar visitas domiciliares.</li>
+            <li>Ajuste o mês de referência acima para acompanhar qualquer período.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- CALENDÁRIO -->
+      <section class="view" id="view-calendario">
+        <div class="panel panel-pad calendar-shell">
+          <div class="calendar-toolbar">
+            <div>
+              <div class="calendar-title" id="calendarTitle">Calendário</div>
+              <div class="visit-note">Plantões e visitas do mês, com controle rápido de pagamento e realização.</div>
+            </div>
+            <div class="calendar-nav">
+              <button class="btn btn-ghost" id="calendarPrev" type="button" title="Mês anterior">‹</button>
+              <input type="month" id="calendarMonth">
+              <button class="btn btn-ghost" id="calendarNext" type="button" title="Próximo mês">›</button>
+            </div>
+          </div>
+          <div class="calendar-legend">
+            <span><i class="legend-dot"></i>Pendente</span>
+            <span><i class="legend-dot paid"></i>Pago / realizado</span>
+            <span><i class="legend-dot received"></i>Recebido do cliente</span>
+            <span><i class="legend-dot cancelled"></i>Cancelado</span>
+          </div>
+          <div class="calendar-weekdays">
+            <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+      </section>
+
+      <!-- PLANTÕES -->
+      <section class="view" id="view-plantoes">
+        <div class="panel panel-pad" style="margin-bottom:18px;background:var(--primary-tint);border-color:var(--primary-tint);">
+          <strong style="color:var(--primary);">Regra 12/36:</strong>
+          <span style="font-size:13.5px;color:var(--ink);">cuidador cumpre plantão de 12h. O sistema alerta automaticamente se o plantão passar de 12h ou se o descanso desde o plantão anterior do mesmo profissional for menor que 36h.</span>
+        </div>
+        <div class="panel panel-pad calc-panel">
+          <div class="calc-head">
+            <h2>Calculadora de plantões</h2>
+            <span class="badge-auto">Mãos Amigas</span>
+          </div>
+          <div class="calc-grid">
+            <div class="form-field"><label>Profissional</label>
+              <select id="calcProf" class="plantao-calc-input">
+                <option value="cuidador">Cuidador</option>
+                <option value="tecnico">Técnico Enf.</option>
+                <option value="enfermeiro">Enfermeiro</option>
+              </select>
+            </div>
+            <div class="form-field"><label>Horas</label>
+              <select id="calcHoras" class="plantao-calc-input">
+                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option>
+                <option>8</option><option>9</option><option>10</option><option>11</option><option selected>12</option><option>13</option><option>14</option>
+              </select>
+            </div>
+            <div class="form-field"><label>Método</label>
+              <select id="calcMetodo" class="plantao-calc-input">
+                <option>PIX</option>
+                <option>Boleto</option>
+                <option>Cartão Crédito</option>
+              </select>
+            </div>
+            <div class="form-field"><label>Período</label>
+              <select id="calcPeriodo" class="plantao-calc-input">
+                <option>Semanal</option>
+                <option>Mensal</option>
+              </select>
+            </div>
+          </div>
+          <div class="calc-checks">
+            <label><input type="checkbox" id="calcSegundoPaciente" class="plantao-calc-input"> 2º paciente (+50%)</label>
+            <label><input type="checkbox" id="calcHospital" class="plantao-calc-input"> Plantão hospitalar (+13%)</label>
+            <label><input type="checkbox" id="calcSupervisao" class="plantao-calc-input"> Visita de supervisão (R$ 35)</label>
+            <label><input type="checkbox" id="calcReserva" class="plantao-calc-input"> Reserva técnica (R$ 22)</label>
+          </div>
+          <div class="calc-results" id="plantaoCalcResultado"></div>
+        </div>
+        <div class="panel">
+          <div class="toolbar">
+            <input type="text" class="search-input" id="searchPlantoes" placeholder="Buscar por profissional ou paciente...">
+            <button class="btn btn-primary" id="btnAddPlantao">+ Novo plantão</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Data</th><th>Profissional</th><th>Paciente</th><th>Local</th>
+                <th>Início–Fim</th><th>Horas</th><th>Descanso anterior</th>
+                <th>Valor cobrado</th><th>Pago cuidador</th><th>Lucro</th>
+                <th>Pagto.</th><th>Receb.</th><th></th>
+              </tr></thead>
+              <tbody id="tblPlantoes"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISITAS -->
+      <section class="view" id="view-visitas">
+        <div class="panel">
+          <div class="toolbar">
+            <input type="text" class="search-input" id="searchVisitas" placeholder="Buscar por profissional ou paciente...">
+            <button class="btn btn-primary" id="btnAddVisita">+ Nova visita</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Data</th><th>Horário</th><th>Profissional</th><th>Paciente</th>
+                <th>Local</th><th>Tipo</th><th>Status</th>
+                <th>Valor cobrado</th><th>Pago prof.</th><th>Lucro</th><th></th>
+              </tr></thead>
+              <tbody id="tblVisitas"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFISSIONAIS -->
+      <section class="view" id="view-profissionais">
+        <div class="panel">
+          <div class="toolbar">
+            <input type="text" class="search-input" id="searchProfissionais" placeholder="Buscar profissional...">
+            <button class="btn btn-primary" id="btnAddProfissional">+ Novo profissional</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Nome</th><th>CPF</th><th>Telefone</th><th>PIX</th><th>Cargo</th>
+                <th>Vínculo</th><th>Valor padrão 12h</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="tblProfissionais"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PACIENTES -->
+      <section class="view" id="view-pacientes">
+        <div class="panel">
+          <div class="toolbar">
+            <input type="text" class="search-input" id="searchPacientes" placeholder="Buscar paciente...">
+            <button class="btn btn-primary" id="btnAddPaciente">+ Novo paciente</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Paciente</th><th>Local/Endereço</th><th>Responsável</th><th>Tel. responsável</th>
+                <th>Parentesco</th><th>Valor cobrado padrão 12h</th><th>Complexidade</th><th></th>
+              </tr></thead>
+              <tbody id="tblPacientes"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXPORTAR SERVIÇO -->
+      <section class="view" id="view-exportar">
+        <div class="panel panel-pad" style="margin-bottom:18px;background:var(--accent-tint);border-color:var(--accent-tint);">
+          <strong style="color:var(--accent);">Cartão de serviço:</strong>
+          <span style="font-size:13.5px;color:var(--ink);">gere um cartão pronto com paciente, cuidador(a) e valores para compartilhar por WhatsApp ou salvar como imagem.</span>
+        </div>
+
+        <div class="section-title"><h2>Plantões</h2></div>
+        <input type="text" class="search-input" id="searchExportPlantoes" placeholder="Buscar por profissional ou paciente..." style="margin-bottom:12px;width:100%;max-width:340px;">
+        <div class="export-list" id="exportListPlantoes"></div>
+
+        <div class="section-title"><h2>Visitas</h2></div>
+        <input type="text" class="search-input" id="searchExportVisitas" placeholder="Buscar por profissional ou paciente..." style="margin-bottom:12px;width:100%;max-width:340px;">
+        <div class="export-list" id="exportListVisitas"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Título</h3>
+      <button class="modal-close" id="modalCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================= STATE ============================= */
+const STORAGE_KEY = "plantoesVisitasApp_v1";
+const SYNC_TOKEN_KEY = "maosAmigasSyncToken_v1";
+const SYNC_ENDPOINTS = ["/.netlify/functions/maos-amigas-sync","/api/maos-amigas-sync"];
+let syncTimer = null;
+let syncLast = {mode:"off", title:"Dados somente neste aparelho", sub:"PC e celular não compartilham dados até ativar a sincronização."};
+let hasStoredState = false;
+
+function defaultState(){
+  return {
+    mesReferencia: "2026-07",
+    nextShiftId: 2,
+    nextVisitId: 1,
+    updatedAt: new Date().toISOString(),
+    professionals: [
+      {nome:"Zelinda de Fátima Tidres", cpf:"787.156.109-00", telefone:"(45) 99859-5961", pix:"(45) 99859-5961", cargo:"Cuidadora", vinculo:"Autônomo", valorPadrao:170, status:"Ativo", obs:""}
+    ],
+    patients: [
+      {nome:"Paciente HGU", local:"HGU - Toledo", responsavel:"Zelaine", telResp:"(45) 99849-7693", parentesco:"Nora", valorPadrao:235, complexidade:"Baixa", obs:""}
+    ],
+    shifts: [
+      {id:1, data:"2026-07-06", profissional:"Zelinda de Fátima Tidres", paciente:"Paciente HGU", horaInicio:"08:00", horaFim:"19:00", valorCobrado:235, valorPago:170, statusPagto:"Pendente", statusReceb:"Pendente", obs:"Primeiro plantão"}
+    ],
+    visits: [
+      {id:0, data:"", horario:"", profissional:"Zelinda de Fátima Tidres", paciente:"Paciente HGU", tipo:"Avaliação inicial", status:"Agendada", valorCobrado:"", valorPago:"", obs:""}
+    ]
+  };
+}
+
+let state = normalizeState(load());
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    hasStoredState = true;
+    const parsed = JSON.parse(raw);
+    if(!parsed.professionals){ hasStoredState = false; return defaultState(); }
+    return parsed;
+  }catch(e){ return defaultState(); }
+}
+function normalizeState(data){
+  const base = defaultState();
+  const merged = Object.assign({}, base, data || {});
+  ["professionals","patients","shifts","visits"].forEach(key=>{
+    if(!Array.isArray(merged[key])) merged[key] = [];
+  });
+  const maxShiftId = Math.max(...merged.shifts.map(s=>Number(s.id)||0), 0);
+  const maxVisitId = Math.max(...merged.visits.map(v=>Number(v.id)||0), 0);
+  merged.nextShiftId = Math.max(Number(merged.nextShiftId)||1, maxShiftId + 1);
+  merged.nextVisitId = Math.max(Number(merged.nextVisitId)||1, maxVisitId + 1);
+  merged.updatedAt = merged.updatedAt || new Date().toISOString();
+  return merged;
+}
+function save(opts={}){
+  if(opts.touch !== false) state.updatedAt = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  hasStoredState = true;
+  if(!opts.skipCloud) scheduleCloudPush();
+  renderSyncStatus();
+}
+window.App = window.App || {};
+const App = window.App;
+
+/* ============================= HELPERS ============================= */
+function onlyDigits(s){ return (s||"").replace(/\D/g,""); }
+function formatCPF(v){
+  const d = onlyDigits(v);
+  if(d.length!==11) return v||"";
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4");
+}
+function formatPhone(v){
+  const d = onlyDigits(v);
+  if(d.length===11) return d.replace(/(\d{2})(\d{5})(\d{4})/,"($1) $2-$3");
+  if(d.length===10) return d.replace(/(\d{2})(\d{4})(\d{4})/,"($1) $2-$3");
+  return v||"";
+}
+function brl(n){
+  if(n===""||n===null||n===undefined||isNaN(n)) return "—";
+  return Number(n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function fmtDate(iso){
+  if(!iso) return "—";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function escapeHtml(s){
+  return (s===undefined||s===null)?"":String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function shiftDateTimes(s){
+  const start = new Date(s.data+"T"+(s.horaInicio||"00:00")+":00");
+  let end = new Date(s.data+"T"+(s.horaFim||"00:00")+":00");
+  let virouDia = false;
+  if(end.getTime() <= start.getTime()){ end.setDate(end.getDate()+1); virouDia = true; }
+  return {start, end, virouDia};
+}
+
+/* Computes derived fields for every shift: horas, alertaHoras, descansoAnterior, alerta1236 */
+function computeShiftsDerived(){
+  const withDT = state.shifts.filter(s=>s.data && s.horaInicio && s.horaFim).map(s=>{
+    const {start,end,virouDia} = shiftDateTimes(s);
+    return {ref:s, start, end, virouDia};
+  });
+  const byProf = {};
+  withDT.forEach(item=>{
+    const key = item.ref.profissional || "—";
+    (byProf[key] = byProf[key]||[]).push(item);
+  });
+  Object.values(byProf).forEach(list=>{
+    list.sort((a,b)=>a.start-b.start);
+    list.forEach((item,idx)=>{
+      const horas = (item.end - item.start)/3600000;
+      item.horas = horas;
+      item.alertaHoras = horas > 12.0001;
+      if(idx===0){
+        item.descanso = null;
+      } else {
+        const prev = list[idx-1];
+        item.descanso = (item.start - prev.end)/3600000;
+      }
+      item.alerta1236 = item.descanso!==null && item.descanso < 36 - 0.001;
+    });
+  });
+  const map = new Map();
+  withDT.forEach(item=> map.set(item.ref, item));
+  return state.shifts.map(s=>{
+    const d = map.get(s);
+    if(!d) return {ref:s, incomplete:true};
+    return {
+      ref:s, incomplete:false, start:d.start, end:d.end, virouDia:d.virouDia,
+      horas:d.horas, alertaHoras:d.alertaHoras, descanso:d.descanso, alerta1236:d.alerta1236
+    };
+  });
+}
+
+function shiftLucro(s){
+  const c = parseFloat(s.valorCobrado), p = parseFloat(s.valorPago);
+  if(isNaN(c)||isNaN(p)) return null;
+  return c-p;
+}
+function visitLucro(v){
+  const c = parseFloat(v.valorCobrado), p = parseFloat(v.valorPago);
+  if(isNaN(c)||isNaN(p)) return null;
+  return c-p;
+}
+
+const PRECOS_MAOS_AMIGAS = {
+  base12:{cuidador:180, tecnico:200, enfermeiro:230},
+  fatorHoras:{1:.32,2:.38,3:.44,4:.48,5:.52,6:.60,7:.67,8:.74,9:.80,10:.86,11:.93,12:1,13:1.08,14:1.17},
+  margem:.28,
+  lucroFixo:5,
+  iss:.06,
+  adicionais:{segundoPaciente:.50, hospital:.13},
+  taxas:{PIX:{Semanal:0,Mensal:0},Boleto:{Semanal:.02,Mensal:.02},"Cartão Crédito":{Semanal:.05,Mensal:.04}},
+  minicustos:{supervisao:35,reserva:22}
+};
+function calcularPlantaoMaosAmigas(){
+  const cfg = PRECOS_MAOS_AMIGAS;
+  const prof = document.getElementById("calcProf")?.value || "cuidador";
+  const horas = parseInt(document.getElementById("calcHoras")?.value || "12",10);
+  const fator = cfg.fatorHoras[horas] || 1;
+  const metodo = document.getElementById("calcMetodo")?.value || "PIX";
+  const periodo = document.getElementById("calcPeriodo")?.value || "Semanal";
+  const adicionalPct =
+    (document.getElementById("calcSegundoPaciente")?.checked ? cfg.adicionais.segundoPaciente : 0) +
+    (document.getElementById("calcHospital")?.checked ? cfg.adicionais.hospital : 0);
+  const custoProfissional = (cfg.base12[prof] || cfg.base12.cuidador) * fator * (1 + adicionalPct);
+  const lucroFixo = cfg.lucroFixo * fator;
+  const minicustos =
+    (document.getElementById("calcSupervisao")?.checked ? cfg.minicustos.supervisao : 0) +
+    (document.getElementById("calcReserva")?.checked ? cfg.minicustos.reserva : 0);
+  const baseComMargem = custoProfissional / (1 - cfg.margem);
+  const antesIss = baseComMargem + lucroFixo + minicustos;
+  const valorComIss = antesIss / (1 - cfg.iss);
+  const taxaPct = cfg.taxas[metodo]?.[periodo] || 0;
+  const valorTaxa = valorComIss * taxaPct;
+  const totalCliente = valorComIss + valorTaxa;
+  return {horas,fator,custoProfissional,lucroFixo,minicustos,baseComMargem,iss:valorComIss-antesIss,taxaPct,valorTaxa,totalCliente};
+}
+function renderPlantaoCalculator(){
+  const out = document.getElementById("plantaoCalcResultado");
+  if(!out) return;
+  const r = calcularPlantaoMaosAmigas();
+  out.innerHTML = `
+    <div class="calc-result"><span>Fator</span><strong>${Math.round(r.fator*100)}%</strong></div>
+    <div class="calc-result"><span>Repasse</span><strong>${brl(r.custoProfissional)}</strong></div>
+    <div class="calc-result"><span>Margem 28%</span><strong>${brl(r.baseComMargem-r.custoProfissional)}</strong></div>
+    <div class="calc-result"><span>Lucro fixo</span><strong>${brl(r.lucroFixo)}</strong></div>
+    <div class="calc-result"><span>ISS</span><strong>${brl(r.iss)}</strong></div>
+    <div class="calc-result"><span>Taxa ${Math.round(r.taxaPct*100)}%</span><strong>${brl(r.valorTaxa)}</strong></div>
+    <div class="calc-result primary"><span>Total cliente</span><strong>${brl(r.totalCliente)}</strong></div>
+  `;
+}
+
+/* ============================= NAVIGATION ============================= */
+const titles = {
+  dashboard:["Dashboard","Resumo mensal, alertas de escala 12/36 e agenda de visitas."],
+  calendario:["Calendário","Compromissos mensais, plantões, visitas e status de pagamento."],
+  plantoes:["Plantões","Gestão dos plantões de cuidadores, com controle automático da escala 12/36."],
+  visitas:["Visitas","Agenda de visitas domiciliares."],
+  profissionais:["Profissionais","Cadastro de cuidadores e demais profissionais."],
+  pacientes:["Pacientes","Cadastro de pacientes, endereços e responsáveis."],
+  exportar:["Exportar Serviço","Gere um cartão de apresentação do serviço para compartilhar."]
+};
+
+document.querySelectorAll(".nav-item").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const view = btn.dataset.view;
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.getElementById("view-"+view).classList.add("active");
+    document.getElementById("pageTitle").textContent = titles[view][0];
+    document.getElementById("pageSub").textContent = titles[view][1];
+    document.getElementById("sidebar").classList.remove("open");
+  });
+});
+document.getElementById("menuToggle").addEventListener("click", ()=>{
+  document.getElementById("sidebar").classList.toggle("open");
+});
+
+/* ============================= MODAL ============================= */
+const overlay = document.getElementById("modalOverlay");
+const modalBody = document.getElementById("modalBody");
+const modalTitle = document.getElementById("modalTitle");
+function openModal(title, html, onMount, wide){
+  modalTitle.textContent = title;
+  modalBody.innerHTML = html;
+  overlay.querySelector(".modal").classList.toggle("modal-wide", !!wide);
+  overlay.classList.remove("hidden");
+  if(onMount) onMount(modalBody);
+}
+function closeModal(){ overlay.classList.add("hidden"); modalBody.innerHTML=""; overlay.querySelector(".modal").classList.remove("modal-wide"); }
+document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+overlay.addEventListener("click", e=>{ if(e.target===overlay) closeModal(); });
+
+/* ============================= SINCRONIZAÇÃO ============================= */
+function getSyncToken(){ return localStorage.getItem(SYNC_TOKEN_KEY) || ""; }
+function setSyncStatus(mode,title,sub){
+  syncLast = {mode,title,sub};
+  renderSyncStatus();
+}
+function renderSyncStatus(){
+  const dot = document.getElementById("syncDot");
+  const title = document.getElementById("syncTitle");
+  const sub = document.getElementById("syncSub");
+  if(dot){
+    dot.classList.toggle("ok", syncLast.mode==="ok");
+    dot.classList.toggle("off", syncLast.mode==="off");
+  }
+  if(title) title.textContent = syncLast.title;
+  if(sub) sub.textContent = syncLast.sub;
+}
+function isCloudSyncUsable(){
+  return location.protocol === "http:" || location.protocol === "https:";
+}
+async function cloudSyncRequest(method,data){
+  const token = getSyncToken();
+  if(!token) throw new Error("Informe o código de sincronização.");
+  if(!isCloudSyncUsable()) throw new Error("A sincronização automática só funciona quando aberto pelo Netlify ou Vercel.");
+  let lastError = "";
+  for(const endpoint of SYNC_ENDPOINTS){
+    try{
+      const res = await fetch(endpoint, {
+        method,
+        headers: {"Content-Type":"application/json","x-maos-amigas-token":token},
+        body: method==="POST" ? JSON.stringify({data}) : undefined
+      });
+      const json = await res.json().catch(()=>({}));
+      if(res.status===404){ lastError = "Endpoint de sincronização não encontrado."; continue; }
+      if(!res.ok) throw new Error(json.error || "Não foi possível sincronizar.");
+      return json;
+    }catch(err){
+      lastError = err.message;
+    }
+  }
+  throw new Error(lastError || "Não foi possível sincronizar.");
+}
+function scheduleCloudPush(){
+  if(!getSyncToken()){
+    setSyncStatus("off","Dados somente neste aparelho","PC e celular não compartilham dados até ativar a sincronização.");
+    return;
+  }
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(()=>syncPush({silent:true}).catch(err=>{
+    setSyncStatus("warn","Sincronização pendente",err.message);
+  }), 900);
+}
+async function syncPush(opts={}){
+  setSyncStatus("warn","Enviando para a nuvem","Salvando a base para os outros aparelhos...");
+  await cloudSyncRequest("POST", state);
+  setSyncStatus("ok","Sincronizado","Último envio: "+new Date().toLocaleString("pt-BR"));
+  if(!opts.silent) alert("Dados enviados para a nuvem.");
+}
+async function syncPull(opts={}){
+  if(!getSyncToken()){
+    setSyncStatus("off","Dados somente neste aparelho","Informe o código de sincronização para ligar PC e celular.");
+    if(!opts.silent) openSyncModal();
+    return;
+  }
+  setSyncStatus("warn","Buscando dados da nuvem","Conferindo se existe versão mais recente...");
+  const res = await cloudSyncRequest("GET");
+  if(!res.data){
+    await syncPush({silent:true});
+    if(!opts.silent) alert("A nuvem estava vazia. Enviei os dados deste aparelho.");
+    return;
+  }
+  const remote = normalizeState(res.data);
+  const remoteTime = Date.parse(remote.updatedAt || 0) || 0;
+  const localTime = Date.parse(state.updatedAt || 0) || 0;
+  if(opts.force || !hasStoredState || remoteTime > localTime){
+    state = remote;
+    save({skipCloud:true,touch:false});
+    renderAll();
+    setSyncStatus("ok","Sincronizado","Dados atualizados da nuvem: "+new Date(remoteTime || Date.now()).toLocaleString("pt-BR"));
+    if(!opts.silent) alert("Dados baixados da nuvem.");
+    return;
+  }
+  if(localTime > remoteTime){
+    await syncPush({silent:true});
+    return;
+  }
+  setSyncStatus("ok","Sincronizado","Este aparelho já está com os dados mais recentes.");
+}
+function openSyncModal(){
+  const token = getSyncToken();
+  openModal("Sincronização entre PC e celular", `
+    <div class="sync-modal-status" id="syncModalStatus">
+      <strong>Como funciona</strong>
+      O app usa uma base na nuvem do Netlify. O mesmo código deve ser usado no PC e no celular.
+    </div>
+    <div class="form-grid">
+      <div class="form-field full">
+        <label>Código de sincronização</label>
+        <input id="syncTokenInput" type="password" value="${escapeHtml(token)}" placeholder="Digite o mesmo código configurado no Netlify">
+        <div class="helper">No Netlify ou Vercel, configure a variável MAOS_AMIGAS_SYNC_TOKEN com este mesmo código.</div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="syncClearBtn" type="button">Usar só neste aparelho</button>
+      <button class="btn btn-ghost" id="syncPullBtn" type="button">Baixar da nuvem</button>
+      <button class="btn btn-ghost" id="syncPushBtn" type="button">Enviar para nuvem</button>
+      <button class="btn btn-primary" id="syncSaveBtn" type="button">Salvar e sincronizar</button>
+    </div>
+  `, body=>{
+    const status = body.querySelector("#syncModalStatus");
+    const writeStatus = msg=>{ status.innerHTML = `<strong>Sincronização</strong>${escapeHtml(msg)}`; };
+    body.querySelector("#syncSaveBtn").onclick = async ()=>{
+      localStorage.setItem(SYNC_TOKEN_KEY, body.querySelector("#syncTokenInput").value.trim());
+      try{ await syncPull({silent:true}); writeStatus("Código salvo. A sincronização foi conferida."); }
+      catch(err){ writeStatus(err.message); }
+    };
+    body.querySelector("#syncPullBtn").onclick = async ()=>{
+      localStorage.setItem(SYNC_TOKEN_KEY, body.querySelector("#syncTokenInput").value.trim());
+      if(!confirm("Baixar dados da nuvem e substituir os dados deste aparelho?")) return;
+      try{ await syncPull({force:true,silent:true}); writeStatus("Dados baixados da nuvem."); }
+      catch(err){ writeStatus(err.message); }
+    };
+    body.querySelector("#syncPushBtn").onclick = async ()=>{
+      localStorage.setItem(SYNC_TOKEN_KEY, body.querySelector("#syncTokenInput").value.trim());
+      if(!confirm("Enviar os dados deste aparelho para a nuvem?")) return;
+      try{ await syncPush({silent:true}); writeStatus("Dados enviados para a nuvem."); }
+      catch(err){ writeStatus(err.message); }
+    };
+    body.querySelector("#syncClearBtn").onclick = ()=>{
+      localStorage.removeItem(SYNC_TOKEN_KEY);
+      setSyncStatus("off","Dados somente neste aparelho","Sincronização desativada neste navegador.");
+      writeStatus("Este aparelho voltou a usar apenas os dados locais.");
+    };
+  });
+}
+function initCloudSync(){
+  renderSyncStatus();
+  if(getSyncToken()) syncPull({silent:true}).catch(err=>setSyncStatus("warn","Sincronização pendente",err.message));
+}
+document.getElementById("btnOpenSync").addEventListener("click", openSyncModal);
+document.getElementById("btnSyncSidebar").addEventListener("click", openSyncModal);
+document.getElementById("btnSyncNow").addEventListener("click", ()=>syncPull({silent:false}).catch(err=>alert(err.message)));
+
+/* ============================= DASHBOARD ============================= */
+function renderDashboard(){
+  document.getElementById("mesReferencia").value = state.mesReferencia;
+  const mes = state.mesReferencia;
+
+  const shiftsDerived = computeShiftsDerived();
+  const shiftsMes = shiftsDerived.filter(d=>d.ref.data && d.ref.data.startsWith(mes));
+  const visitsMes = state.visits.filter(v=>v.data && v.data.startsWith(mes));
+
+  const valorCobradoMes = shiftsMes.reduce((a,d)=>a+(parseFloat(d.ref.valorCobrado)||0),0);
+  const pagoCuidadoresMes = shiftsMes.reduce((a,d)=>a+(parseFloat(d.ref.valorPago)||0),0);
+  const lucroMes = valorCobradoMes - pagoCuidadoresMes;
+
+  const alertasHoras = shiftsMes.filter(d=>d.alertaHoras).length;
+  const alertas1236 = shiftsMes.filter(d=>d.alerta1236).length;
+  const profissionaisAtivos = state.professionals.filter(p=>p.status==="Ativo").length;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7 = new Date(today); in7.setDate(in7.getDate()+7);
+  function isNext7(dateStr){
+    if(!dateStr) return false;
+    const d = new Date(dateStr+"T00:00:00");
+    return d>=today && d<=in7;
+  }
+  const plantoesProx7 = state.shifts.filter(s=>isNext7(s.data)).length;
+  const visitasProx7 = state.visits.filter(v=>isNext7(v.data)).length;
+  const visitasAgendadas = state.visits.filter(v=>v.status==="Agendada").length;
+  const visitasRealizadasMes = visitsMes.filter(v=>v.status==="Realizada").length;
+  const receitaVisitasMes = visitsMes.filter(v=>v.status==="Realizada").reduce((a,v)=>a+(parseFloat(v.valorCobrado)||0),0);
+
+  document.getElementById("cardsRow1").innerHTML = `
+    ${card("Plantões no mês", shiftsMes.length, "")}
+    ${card("Valor cobrado no mês", brl(valorCobradoMes), "", "accent")}
+    ${card("Pago a cuidadores", brl(pagoCuidadoresMes), "")}
+    ${card("Lucro bruto do mês", brl(lucroMes), "", lucroMes<0?"danger":"accent")}
+  `;
+  document.getElementById("cardsRow2").innerHTML = `
+    ${card("Alertas &gt;12h", alertasHoras, "plantões acima de 12h no mês", alertasHoras>0?"danger":"")}
+    ${card("Alertas 12/36", alertas1236, "descanso insuficiente no mês", alertas1236>0?"danger":"")}
+    ${card("Profissionais ativos", profissionaisAtivos, "")}
+    ${card("Plantões próx. 7 dias", plantoesProx7, "")}
+  `;
+  document.getElementById("cardsRow3").innerHTML = `
+    ${card("Visitas próx. 7 dias", visitasProx7, "")}
+    ${card("Visitas agendadas", visitasAgendadas, "no total")}
+    ${card("Visitas realizadas no mês", visitasRealizadasMes, "")}
+    ${card("Receita de visitas no mês", brl(receitaVisitasMes), "", "accent")}
+  `;
+}
+function card(label,value,hint,tone){
+  return `<div class="card ${tone||""}">
+    <div class="label">${label}</div>
+    <div class="value">${value}</div>
+    ${hint?`<div class="hint">${hint}</div>`:""}
+  </div>`;
+}
+document.getElementById("mesReferencia").addEventListener("change", e=>{
+  state.mesReferencia = e.target.value || state.mesReferencia;
+  save(); renderAll();
+});
+
+/* ============================= CALENDÁRIO ============================= */
+const calendarWeekdays = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+function parseYearMonth(ym){
+  const [year,month] = String(ym || todayISO().slice(0,7)).split("-").map(Number);
+  return {year:year || new Date().getFullYear(), month:month || (new Date().getMonth()+1)};
+}
+function isoDateParts(year,month,day){
+  return `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+}
+function addMonthsToYm(ym,delta){
+  const {year,month} = parseYearMonth(ym);
+  const d = new Date(year, month - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+function calendarEventClass(kind,item){
+  if(kind==="plantao"){
+    if(item.statusPagto==="Pago") return "paid";
+    if(item.statusReceb==="Recebido") return "received";
+    return "";
+  }
+  if(item.status==="Realizada") return "done";
+  if(item.status==="Cancelada") return "cancelled";
+  return "";
+}
+function calendarEventHtml(kind,item,idx){
+  if(kind==="plantao"){
+    const patient = state.patients.find(p=>p.nome===item.paciente);
+    return `<div class="calendar-event ${calendarEventClass(kind,item)}">
+      <div class="calendar-event-title">Plantão · ${escapeHtml(item.paciente||"Paciente não definido")}</div>
+      <div class="calendar-event-meta">${escapeHtml(item.horaInicio||"--:--")} - ${escapeHtml(item.horaFim||"--:--")} · ${escapeHtml(item.profissional||"Cuidador não definido")}</div>
+      ${patient&&patient.local?`<div class="calendar-event-meta">${escapeHtml(patient.local)}</div>`:""}
+      <div class="calendar-event-actions">
+        <label class="calendar-check"><input type="checkbox" ${item.statusPagto==="Pago"?"checked":""} onchange="App.togglePlantaoPago(${idx},this.checked)"> Pago</label>
+        <label class="calendar-check"><input type="checkbox" ${item.statusReceb==="Recebido"?"checked":""} onchange="App.togglePlantaoRecebido(${idx},this.checked)"> Recebido</label>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="App.editPlantao(${idx})">Editar</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="calendar-event ${calendarEventClass(kind,item)}">
+    <div class="calendar-event-title">Visita · ${escapeHtml(item.paciente||"Paciente não definido")}</div>
+    <div class="calendar-event-meta">${escapeHtml(item.horario||"--:--")} · ${escapeHtml(item.tipo||"Visita domiciliar")} · ${escapeHtml(item.profissional||"Profissional não definido")}</div>
+    <div class="calendar-event-actions">
+      <label class="calendar-check"><input type="checkbox" ${item.status==="Realizada"?"checked":""} onchange="App.toggleVisitaRealizada(${idx},this.checked)"> Realizada</label>
+      <button class="btn btn-ghost btn-sm" type="button" onclick="App.editVisita(${idx})">Editar</button>
+    </div>
+  </div>`;
+}
+function calendarEventsForDay(iso){
+  const events = [];
+  state.shifts.forEach((s,idx)=>{ if(s.data===iso) events.push({kind:"plantao",item:s,idx,time:s.horaInicio||"99:99"}); });
+  state.visits.forEach((v,idx)=>{ if(v.data===iso) events.push({kind:"visita",item:v,idx,time:v.horario||"99:99"}); });
+  return events.sort((a,b)=>a.time.localeCompare(b.time) || a.kind.localeCompare(b.kind));
+}
+function renderCalendario(){
+  const grid = document.getElementById("calendarGrid");
+  const input = document.getElementById("calendarMonth");
+  if(!grid || !input) return;
+  const ym = state.mesReferencia || todayISO().slice(0,7);
+  const {year,month} = parseYearMonth(ym);
+  input.value = ym;
+  const title = document.getElementById("calendarTitle");
+  if(title){
+    title.textContent = new Date(year, month-1, 1).toLocaleDateString("pt-BR", {month:"long", year:"numeric"});
+  }
+  const firstWeekday = new Date(year, month-1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const today = todayISO();
+  const cells = [];
+  for(let i=0;i<firstWeekday;i++){
+    cells.push(`<div class="calendar-day" data-weekday=""></div>`);
+  }
+  for(let day=1; day<=daysInMonth; day++){
+    const iso = isoDateParts(year,month,day);
+    const dateObj = new Date(year,month-1,day);
+    const events = calendarEventsForDay(iso);
+    cells.push(`<div class="calendar-day ${iso===today?"today":""}" data-weekday="${calendarWeekdays[dateObj.getDay()]}">
+      <div class="calendar-day-number">${String(day).padStart(2,"0")}</div>
+      ${events.map(ev=>calendarEventHtml(ev.kind,ev.item,ev.idx)).join("")}
+    </div>`);
+  }
+  const trailing = (7 - (cells.length % 7)) % 7;
+  for(let i=0;i<trailing;i++){
+    cells.push(`<div class="calendar-day" data-weekday=""></div>`);
+  }
+  grid.innerHTML = cells.join("");
+}
+function setCalendarMonth(ym){
+  state.mesReferencia = ym || state.mesReferencia;
+  save();
+  renderAll();
+}
+App.togglePlantaoPago = (idx,checked)=>{
+  if(!state.shifts[idx]) return;
+  state.shifts[idx].statusPagto = checked ? "Pago" : "Pendente";
+  save(); renderAll();
+};
+App.togglePlantaoRecebido = (idx,checked)=>{
+  if(!state.shifts[idx]) return;
+  state.shifts[idx].statusReceb = checked ? "Recebido" : "Pendente";
+  save(); renderAll();
+};
+App.toggleVisitaRealizada = (idx,checked)=>{
+  if(!state.visits[idx]) return;
+  state.visits[idx].status = checked ? "Realizada" : "Agendada";
+  save(); renderAll();
+};
+document.getElementById("calendarMonth").addEventListener("change", e=>setCalendarMonth(e.target.value));
+document.getElementById("calendarPrev").addEventListener("click", ()=>setCalendarMonth(addMonthsToYm(state.mesReferencia,-1)));
+document.getElementById("calendarNext").addEventListener("click", ()=>setCalendarMonth(addMonthsToYm(state.mesReferencia,1)));
+
+/* ============================= PROFISSIONAIS ============================= */
+function renderProfissionais(){
+  const term = (document.getElementById("searchProfissionais").value||"").toLowerCase();
+  const tbody = document.getElementById("tblProfissionais");
+  const rows = state.professionals
+    .map((p,idx)=>({p,idx}))
+    .filter(({p})=> p.nome.toLowerCase().includes(term));
+  if(rows.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Nenhum profissional cadastrado ainda. Clique em "+ Novo profissional" para começar.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(({p,idx})=>`
+    <tr>
+      <td><strong>${escapeHtml(p.nome)}</strong></td>
+      <td class="mono">${escapeHtml(p.cpf)}</td>
+      <td class="mono">${escapeHtml(p.telefone)}</td>
+      <td class="mono">${escapeHtml(p.pix)}</td>
+      <td>${escapeHtml(p.cargo)}</td>
+      <td>${escapeHtml(p.vinculo)}</td>
+      <td class="mono">${brl(p.valorPadrao)}</td>
+      <td>${p.status==="Ativo"?'<span class="pill pill-ok">Ativo</span>':'<span class="pill pill-muted">Inativo</span>'}</td>
+      <td class="cell-actions">
+        <button class="icon-btn" title="Editar" onclick="App.editProfissional(${idx})">✎</button>
+        <button class="icon-btn" title="Excluir" onclick="App.deleteProfissional(${idx})">🗑</button>
+      </td>
+    </tr>
+  `).join("");
+}
+function profissionalForm(existing){
+  const p = existing || {nome:"",cpf:"",telefone:"",pix:"",cargo:"Cuidador(a)",vinculo:"Autônomo",valorPadrao:"",status:"Ativo",obs:""};
+  return `
+    <div class="form-grid">
+      <div class="form-field full"><label>Nome do profissional</label><input id="f_nome" value="${escapeHtml(p.nome)}"></div>
+      <div class="form-field"><label>CPF</label><input id="f_cpf" value="${escapeHtml(p.cpf)}" placeholder="000.000.000-00"></div>
+      <div class="form-field"><label>Telefone</label><input id="f_telefone" value="${escapeHtml(p.telefone)}" placeholder="(00) 00000-0000"></div>
+      <div class="form-field"><label>PIX / Chave</label><input id="f_pix" value="${escapeHtml(p.pix)}"></div>
+      <div class="form-field"><label>Cargo / Função</label><input id="f_cargo" value="${escapeHtml(p.cargo)}"></div>
+      <div class="form-field"><label>Vínculo</label>
+        <select id="f_vinculo">
+          ${["Autônomo","CLT","Cooperativa","Outro"].map(v=>`<option ${p.vinculo===v?"selected":""}>${v}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-field"><label>Valor padrão 12h (R$)</label><input id="f_valor" type="number" step="0.01" value="${p.valorPadrao}"></div>
+      <div class="form-field"><label>Status</label>
+        <select id="f_status">
+          <option ${p.status==="Ativo"?"selected":""}>Ativo</option>
+          <option ${p.status==="Inativo"?"selected":""}>Inativo</option>
+        </select>
+      </div>
+      <div class="form-field full"><label>Observações</label><textarea id="f_obs" rows="2">${escapeHtml(p.obs)}</textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn btn-primary" id="saveBtn">Salvar</button>
+    </div>
+  `;
+}
+function openProfissionalModal(idx){
+  const existing = idx!==undefined ? state.professionals[idx] : null;
+  openModal(existing?"Editar profissional":"Novo profissional", profissionalForm(existing), body=>{
+    body.querySelector("#cancelBtn").onclick = closeModal;
+    body.querySelector("#saveBtn").onclick = ()=>{
+      const nome = body.querySelector("#f_nome").value.trim();
+      if(!nome){ alert("Informe o nome do profissional."); return; }
+      const data = {
+        nome,
+        cpf: formatCPF(body.querySelector("#f_cpf").value.trim()),
+        telefone: formatPhone(body.querySelector("#f_telefone").value.trim()),
+        pix: body.querySelector("#f_pix").value.trim(),
+        cargo: body.querySelector("#f_cargo").value.trim(),
+        vinculo: body.querySelector("#f_vinculo").value,
+        valorPadrao: parseFloat(body.querySelector("#f_valor").value)||0,
+        status: body.querySelector("#f_status").value,
+        obs: body.querySelector("#f_obs").value.trim()
+      };
+      if(idx!==undefined) state.professionals[idx] = data;
+      else state.professionals.push(data);
+      save(); closeModal(); renderAll();
+    };
+  });
+}
+window.App = window.App || {};
+App.editProfissional = idx=> openProfissionalModal(idx);
+App.deleteProfissional = idx=>{
+  if(confirm("Excluir este profissional? Plantões e visitas já lançados não serão apagados.")){
+    state.professionals.splice(idx,1); save(); renderAll();
+  }
+};
+document.getElementById("btnAddProfissional").addEventListener("click", ()=>openProfissionalModal());
+document.getElementById("searchProfissionais").addEventListener("input", renderProfissionais);
+
+/* ============================= PACIENTES ============================= */
+function renderPacientes(){
+  const term = (document.getElementById("searchPacientes").value||"").toLowerCase();
+  const tbody = document.getElementById("tblPacientes");
+  const rows = state.patients.map((p,idx)=>({p,idx})).filter(({p})=>p.nome.toLowerCase().includes(term));
+  if(rows.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Nenhum paciente cadastrado ainda. Clique em "+ Novo paciente" para começar.</td></tr>`;
+    return;
+  }
+  const complexColor = {Baixa:"pill-ok",Média:"pill-warn",Alta:"pill-danger"};
+  tbody.innerHTML = rows.map(({p,idx})=>`
+    <tr>
+      <td><button class="patient-link" type="button" onclick="App.openProntuarioPaciente(${idx})">${escapeHtml(p.nome)}</button></td>
+      <td>${escapeHtml(p.local)}</td>
+      <td>${escapeHtml(p.responsavel)}</td>
+      <td class="mono">${escapeHtml(p.telResp)}</td>
+      <td>${escapeHtml(p.parentesco)}</td>
+      <td class="mono">${brl(p.valorPadrao)}</td>
+      <td><span class="pill ${complexColor[p.complexidade]||'pill-neutral'}">${escapeHtml(p.complexidade||"—")}</span></td>
+      <td class="cell-actions">
+        <button class="icon-btn" title="Editar" onclick="App.editPaciente(${idx})">✎</button>
+        <button class="icon-btn" title="Excluir" onclick="App.deletePaciente(${idx})">🗑</button>
+      </td>
+    </tr>
+  `).join("");
+}
+function pacienteForm(existing){
+  const p = existing || {nome:"",local:"",responsavel:"",telResp:"",parentesco:"",valorPadrao:"",complexidade:"Baixa",obs:""};
+  return `
+    <div class="form-grid">
+      <div class="form-field full"><label>Nome do paciente</label><input id="f_nome" value="${escapeHtml(p.nome)}"></div>
+      <div class="form-field full"><label>Local / Endereço padrão</label><input id="f_local" value="${escapeHtml(p.local)}"></div>
+      <div class="form-field"><label>Responsável</label><input id="f_resp" value="${escapeHtml(p.responsavel)}"></div>
+      <div class="form-field"><label>Telefone do responsável</label><input id="f_telresp" value="${escapeHtml(p.telResp)}" placeholder="(00) 00000-0000"></div>
+      <div class="form-field"><label>Parentesco / Vínculo</label><input id="f_parentesco" value="${escapeHtml(p.parentesco)}"></div>
+      <div class="form-field"><label>Valor cobrado padrão 12h (R$)</label><input id="f_valor" type="number" step="0.01" value="${p.valorPadrao}"></div>
+      <div class="form-field"><label>Complexidade</label>
+        <select id="f_complex">
+          ${["Baixa","Média","Alta"].map(v=>`<option ${p.complexidade===v?"selected":""}>${v}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-field full"><label>Observações</label><textarea id="f_obs" rows="2">${escapeHtml(p.obs)}</textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn btn-primary" id="saveBtn">Salvar</button>
+    </div>
+  `;
+}
+function openPacienteModal(idx){
+  const existing = idx!==undefined ? state.patients[idx] : null;
+  openModal(existing?"Editar paciente":"Novo paciente", pacienteForm(existing), body=>{
+    body.querySelector("#cancelBtn").onclick = closeModal;
+    body.querySelector("#saveBtn").onclick = ()=>{
+      const nome = body.querySelector("#f_nome").value.trim();
+      if(!nome){ alert("Informe o nome do paciente."); return; }
+      const data = {
+        nome,
+        local: body.querySelector("#f_local").value.trim(),
+        responsavel: body.querySelector("#f_resp").value.trim(),
+        telResp: formatPhone(body.querySelector("#f_telresp").value.trim()),
+        parentesco: body.querySelector("#f_parentesco").value.trim(),
+        valorPadrao: parseFloat(body.querySelector("#f_valor").value)||0,
+        complexidade: body.querySelector("#f_complex").value,
+        obs: body.querySelector("#f_obs").value.trim()
+      };
+      if(idx!==undefined) state.patients[idx] = data;
+      else state.patients.push(data);
+      save(); closeModal(); renderAll();
+    };
+  });
+}
+function soapCompletoVisita(v){
+  const vd = v.vd || {};
+  return [vd.soapS,vd.soapO,vd.soapA,vd.soapP].filter(Boolean).join("\n\n");
+}
+function prontuarioPacienteHtml(idx){
+  const p = state.patients[idx];
+  const visitas = state.visits.filter(v=>v.paciente===p.nome).slice().sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  const plantoes = state.shifts.filter(s=>s.paciente===p.nome).slice().sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  const visitasHtml = visitas.length ? visitas.map(v=>{
+    const vd = v.vd || {};
+    const escalas = (vd.escalasResultados||[]).map(r=>r.texto).join("\n");
+    const soap = soapCompletoVisita(v);
+    return `<div class="prontuario-event">
+      <h5>Visita domiciliar - ${v.data?fmtDate(v.data):"Sem data"} ${v.horario||""}</h5>
+      <div class="visit-note"><strong>Profissional:</strong> ${escapeHtml(v.profissional||"—")} · <strong>Status:</strong> ${escapeHtml(v.status||"—")} · <strong>Tipo:</strong> ${escapeHtml(v.tipo||"—")}</div>
+      ${vd.tipoVisita?`<div class="visit-note"><strong>Tipo clínico:</strong> ${escapeHtml(vd.tipoVisita)}</div>`:""}
+      ${escalas?`<pre>${escapeHtml(escalas)}</pre>`:""}
+      ${soap?`<pre>${escapeHtml(soap)}</pre>`:"<div class=\"visit-note\">Sem SOAP registrado.</div>"}
+    </div>`;
+  }).join("") : `<div class="prontuario-event"><h5>Visitas</h5><div class="visit-note">Nenhuma visita registrada para este paciente.</div></div>`;
+  const plantoesHtml = plantoes.length ? plantoes.map(s=>`<div class="prontuario-event">
+    <h5>Plantão - ${s.data?fmtDate(s.data):"Sem data"} ${s.horaInicio||"—"}-${s.horaFim||"—"}</h5>
+    <div class="visit-note"><strong>Profissional:</strong> ${escapeHtml(s.profissional||"—")} · <strong>Cobrado:</strong> ${brl(s.valorCobrado)} · <strong>Pago profissional:</strong> ${brl(s.valorPago)} · <strong>Obs.:</strong> ${escapeHtml(s.obs||"")}</div>
+  </div>`).join("") : `<div class="prontuario-event"><h5>Plantões</h5><div class="visit-note">Nenhum plantão registrado para este paciente.</div></div>`;
+  return `<div class="prontuario-head">
+    <div class="prontuario-box">
+      <h4>${escapeHtml(p.nome)}</h4>
+      <div class="visit-note"><strong>Local/endereço:</strong> ${escapeHtml(p.local||"—")}</div>
+      <div class="visit-note"><strong>Responsável:</strong> ${escapeHtml(p.responsavel||"—")} ${p.parentesco?`(${escapeHtml(p.parentesco)})`:""}</div>
+      <div class="visit-note"><strong>Telefone:</strong> ${escapeHtml(p.telResp||"—")}</div>
+      <div class="visit-note"><strong>Complexidade:</strong> ${escapeHtml(p.complexidade||"—")}</div>
+      ${p.obs?`<div class="visit-note"><strong>Observações:</strong> ${escapeHtml(p.obs)}</div>`:""}
+    </div>
+    <div class="prontuario-box">
+      <h4>Resumo</h4>
+      <div class="calc-results">
+        <div class="calc-result"><span>Visitas</span><strong>${visitas.length}</strong></div>
+        <div class="calc-result"><span>Plantões</span><strong>${plantoes.length}</strong></div>
+        <div class="calc-result primary"><span>Última visita</span><strong>${visitas[0]?.data?fmtDate(visitas[0].data):"—"}</strong></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-title"><h2>Visitas e SOAP</h2></div>
+  <div class="prontuario-timeline">${visitasHtml}</div>
+  <div class="section-title"><h2>Plantões</h2></div>
+  <div class="prontuario-timeline">${plantoesHtml}</div>
+  <div class="form-actions"><button class="btn btn-ghost" id="cancelBtn">Fechar</button><button class="btn btn-primary" id="editPatientBtn">Editar paciente</button></div>`;
+}
+function openProntuarioPaciente(idx){
+  const p = state.patients[idx];
+  if(!p) return;
+  openModal("Prontuário eletrônico do paciente", prontuarioPacienteHtml(idx), body=>{
+    body.querySelector("#cancelBtn").onclick = closeModal;
+    body.querySelector("#editPatientBtn").onclick = ()=>openPacienteModal(idx);
+  });
+}
+App.editPaciente = idx=> openPacienteModal(idx);
+App.openProntuarioPaciente = idx=> openProntuarioPaciente(idx);
+App.deletePaciente = idx=>{
+  if(confirm("Excluir este paciente? Plantões e visitas já lançados não serão apagados.")){
+    state.patients.splice(idx,1); save(); renderAll();
+  }
+};
+document.getElementById("btnAddPaciente").addEventListener("click", ()=>openPacienteModal());
+document.getElementById("searchPacientes").addEventListener("input", renderPacientes);
+
+/* ============================= PLANTÕES ============================= */
+function restBarHtml(descanso, alerta1236, isFirst){
+  if(isFirst){
+    return `<span class="pill pill-neutral">Primeiro plantão</span>`;
+  }
+  if(descanso===null||descanso===undefined) return `<span class="pill pill-muted">—</span>`;
+  const cls = alerta1236 ? "pill-danger" : "pill-ok";
+  return `<span class="pill ${cls}">${descanso.toFixed(1)}h ${alerta1236?"⚠ insuficiente":"OK"}</span>`;
+}
+function renderPlantoes(){
+  const term = (document.getElementById("searchPlantoes").value||"").toLowerCase();
+  const tbody = document.getElementById("tblPlantoes");
+  const derived = computeShiftsDerived();
+
+  const withProfIdx = {};
+  const grouped = {};
+  derived.filter(d=>!d.incomplete).forEach(d=>{
+    (grouped[d.ref.profissional] = grouped[d.ref.profissional]||[]).push(d);
+  });
+  Object.values(grouped).forEach(list=> list.sort((a,b)=>a.start-b.start));
+  const isFirstMap = new Map();
+  Object.values(grouped).forEach(list=>{ list.forEach((d,i)=> isFirstMap.set(d.ref, i===0)); });
+
+  let rows = derived.filter(d=>{
+    const s = d.ref;
+    return (s.profissional||"").toLowerCase().includes(term) || (s.paciente||"").toLowerCase().includes(term);
+  });
+  rows = rows.slice().sort((a,b)=> (b.ref.data||"").localeCompare(a.ref.data||""));
+
+  if(rows.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="13">Nenhum plantão lançado ainda. Clique em "+ Novo plantão" para começar.</td></tr>`;
+    return;
+  }
+
+  const pagtoOptions = {Pendente:"pill-warn",Pago:"pill-ok"};
+  const recebOptions = {Pendente:"pill-warn",Recebido:"pill-ok"};
+
+  tbody.innerHTML = rows.map(d=>{
+    const s = d.ref;
+    const idx = state.shifts.indexOf(s);
+    const patient = state.patients.find(p=>p.nome===s.paciente);
+    const local = patient ? patient.local : "—";
+    const lucro = shiftLucro(s);
+    let horasCell = "—", alertaHorasCell = "";
+    let descansoCell = `<span class="pill pill-muted">—</span>`;
+    if(!d.incomplete){
+      horasCell = d.horas.toFixed(1)+"h" + (d.virouDia?" 🌙":"");
+      if(d.alertaHoras) alertaHorasCell = `<div class="pill pill-danger" style="margin-top:4px;">⚠ &gt;12h</div>`;
+      descansoCell = restBarHtml(d.descanso, d.alerta1236, isFirstMap.get(s));
+    }
+    return `
+      <tr>
+        <td>${fmtDate(s.data)}</td>
+        <td><strong>${escapeHtml(s.profissional||"—")}</strong></td>
+        <td>${escapeHtml(s.paciente||"—")}</td>
+        <td>${escapeHtml(local)}</td>
+        <td class="mono">${s.horaInicio||"—"}–${s.horaFim||"—"}</td>
+        <td>${horasCell}${alertaHorasCell}</td>
+        <td>${descansoCell}</td>
+        <td class="mono">${brl(s.valorCobrado)}</td>
+        <td class="mono">${brl(s.valorPago)}</td>
+        <td class="mono">${lucro===null?"—":brl(lucro)}</td>
+        <td><span class="pill ${pagtoOptions[s.statusPagto]||'pill-muted'}">${escapeHtml(s.statusPagto||"—")}</span></td>
+        <td><span class="pill ${recebOptions[s.statusReceb]||'pill-muted'}">${escapeHtml(s.statusReceb||"—")}</span></td>
+        <td class="cell-actions">
+          <button class="icon-btn" title="Exportar cartão" onclick="App.openCardPlantao(${idx})">📤</button>
+          <button class="icon-btn" title="Editar" onclick="App.editPlantao(${idx})">✎</button>
+          <button class="icon-btn" title="Excluir" onclick="App.deletePlantao(${idx})">🗑</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+function profOptions(selected){
+  return state.professionals.map(p=>`<option value="${escapeHtml(p.nome)}" ${p.nome===selected?"selected":""}>${escapeHtml(p.nome)}</option>`).join("");
+}
+function pacOptions(selected){
+  return state.patients.map(p=>`<option value="${escapeHtml(p.nome)}" ${p.nome===selected?"selected":""}>${escapeHtml(p.nome)}</option>`).join("");
+}
+function plantaoForm(existing){
+  const s = existing || {data:todayISO(),profissional:"",paciente:"",horaInicio:"08:00",horaFim:"20:00",valorCobrado:"",valorPago:"",statusPagto:"Pendente",statusReceb:"Pendente",obs:""};
+  return `
+    <div class="form-grid">
+      <div class="form-field"><label>Data</label><input id="f_data" type="date" value="${s.data}"></div>
+      <div class="form-field"></div>
+      <div class="form-field"><label>Profissional <span class="badge-auto">auto-preenche valores</span></label>
+        <select id="f_prof"><option value="">Selecione...</option>${profOptions(s.profissional)}</select>
+      </div>
+      <div class="form-field"><label>Paciente <span class="badge-auto">auto-preenche valores</span></label>
+        <select id="f_pac"><option value="">Selecione...</option>${pacOptions(s.paciente)}</select>
+      </div>
+      <div class="form-field"><label>Hora início</label><input id="f_inicio" type="time" value="${s.horaInicio}"></div>
+      <div class="form-field"><label>Hora fim</label><input id="f_fim" type="time" value="${s.horaFim}"></div>
+      <div class="form-field"><label>Valor cobrado (R$)</label><input id="f_cobrado" type="number" step="0.01" value="${s.valorCobrado}"></div>
+      <div class="form-field"><label>Valor pago ao cuidador (R$)</label><input id="f_pago" type="number" step="0.01" value="${s.valorPago}"></div>
+      <div class="form-field"><label>Status pagamento cuidador</label>
+        <select id="f_statusPagto">
+          <option ${s.statusPagto==="Pendente"?"selected":""}>Pendente</option>
+          <option ${s.statusPagto==="Pago"?"selected":""}>Pago</option>
+        </select>
+      </div>
+      <div class="form-field"><label>Status recebimento cliente</label>
+        <select id="f_statusReceb">
+          <option ${s.statusReceb==="Pendente"?"selected":""}>Pendente</option>
+          <option ${s.statusReceb==="Recebido"?"selected":""}>Recebido</option>
+        </select>
+      </div>
+      <div class="form-field full"><label>Observações</label><textarea id="f_obs" rows="2">${escapeHtml(s.obs)}</textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn btn-primary" id="saveBtn">Salvar</button>
+    </div>
+  `;
+}
+function openPlantaoModal(idx){
+  const existing = idx!==undefined ? state.shifts[idx] : null;
+  openModal(existing?"Editar plantão":"Novo plantão", plantaoForm(existing), body=>{
+    const selProf = body.querySelector("#f_prof");
+    const selPac = body.querySelector("#f_pac");
+    selProf.addEventListener("change", ()=>{
+      const p = state.professionals.find(x=>x.nome===selProf.value);
+      if(p && !body.querySelector("#f_pago").value) body.querySelector("#f_pago").value = p.valorPadrao;
+    });
+    selPac.addEventListener("change", ()=>{
+      const p = state.patients.find(x=>x.nome===selPac.value);
+      if(p && !body.querySelector("#f_cobrado").value) body.querySelector("#f_cobrado").value = p.valorPadrao;
+    });
+    body.querySelector("#cancelBtn").onclick = closeModal;
+    body.querySelector("#saveBtn").onclick = ()=>{
+      const data = body.querySelector("#f_data").value;
+      if(!data){ alert("Informe a data do plantão."); return; }
+      const rec = {
+        id: existing ? existing.id : state.nextShiftId++,
+        data,
+        profissional: selProf.value,
+        paciente: selPac.value,
+        horaInicio: body.querySelector("#f_inicio").value,
+        horaFim: body.querySelector("#f_fim").value,
+        valorCobrado: body.querySelector("#f_cobrado").value===""?"":parseFloat(body.querySelector("#f_cobrado").value),
+        valorPago: body.querySelector("#f_pago").value===""?"":parseFloat(body.querySelector("#f_pago").value),
+        statusPagto: body.querySelector("#f_statusPagto").value,
+        statusReceb: body.querySelector("#f_statusReceb").value,
+        obs: body.querySelector("#f_obs").value.trim()
+      };
+      if(idx!==undefined) state.shifts[idx] = rec;
+      else state.shifts.push(rec);
+      save(); closeModal(); renderAll();
+    };
+  });
+}
+App.editPlantao = idx=> openPlantaoModal(idx);
+App.deletePlantao = idx=>{
+  if(confirm("Excluir este plantão?")){ state.shifts.splice(idx,1); save(); renderAll(); }
+};
+document.getElementById("btnAddPlantao").addEventListener("click", ()=>openPlantaoModal());
+document.getElementById("searchPlantoes").addEventListener("input", renderPlantoes);
+document.querySelectorAll(".plantao-calc-input").forEach(el=>{
+  el.addEventListener("input", renderPlantaoCalculator);
+  el.addEventListener("change", renderPlantaoCalculator);
+});
+
+/* ============================= VISITAS ============================= */
+function renderVisitas(){
+  const term = (document.getElementById("searchVisitas").value||"").toLowerCase();
+  const tbody = document.getElementById("tblVisitas");
+  let rows = state.visits.map((v,idx)=>({v,idx})).filter(({v})=>
+    (v.profissional||"").toLowerCase().includes(term) || (v.paciente||"").toLowerCase().includes(term)
+  );
+  rows = rows.slice().sort((a,b)=> (b.v.data||"").localeCompare(a.v.data||""));
+  if(rows.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="11">Nenhuma visita agendada ainda. Clique em "+ Nova visita" para começar.</td></tr>`;
+    return;
+  }
+  const statusColor = {Agendada:"pill-neutral",Realizada:"pill-ok",Cancelada:"pill-danger"};
+  tbody.innerHTML = rows.map(({v,idx})=>{
+    const patient = state.patients.find(p=>p.nome===v.paciente);
+    const local = patient?patient.local:"—";
+    const lucro = visitLucro(v);
+    return `
+      <tr>
+        <td>${v.data?fmtDate(v.data):"—"}</td>
+        <td class="mono">${escapeHtml(v.horario||"—")}</td>
+        <td><strong>${escapeHtml(v.profissional||"—")}</strong></td>
+        <td>${escapeHtml(v.paciente||"—")}</td>
+        <td>${escapeHtml(local)}</td>
+        <td>${escapeHtml(v.tipo||"—")}</td>
+        <td><span class="pill ${statusColor[v.status]||'pill-muted'}">${escapeHtml(v.status||"—")}</span></td>
+        <td class="mono">${brl(v.valorCobrado)}</td>
+        <td class="mono">${brl(v.valorPago)}</td>
+        <td class="mono">${lucro===null?"—":brl(lucro)}</td>
+        <td class="cell-actions">
+          <button class="icon-btn" title="Exportar cartão" onclick="App.openCardVisita(${idx})">📤</button>
+          <button class="icon-btn" title="Editar" onclick="App.editVisita(${idx})">✎</button>
+          <button class="icon-btn" title="Excluir" onclick="App.deleteVisita(${idx})">🗑</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+function defaultVisitaDomiciliarData(data){
+  const vd = Object.assign({
+    tipoVisita:"Rotina/acompanhamento", motivo:"", queixa:"", historia:"",
+    cuidador:"", parentescoCuidador:"", telefoneCuidador:"",
+    redeApoio:"", responsavelPresente:"", ambiente:"", riscoAmbiente:"", higiene:"", rotinaSono:"", eliminacoes:"",
+    idoso:"", deambula:"", quedaRecente:"", apoioMarcha:"", marchaAlterada:"", feridaUmidade:"", baixaIngesta:"", comunicaDor:"", paliativo:"", confusaoAguda:"", sintomasDepressivos:"",
+    acamado:"", mobilidade:"", adl:"", consciencia:"", humor:"", dor:"",
+    pa:"", fc:"", fr:"", sat:"", temp:"", glicemia:"",
+    pele:"", feridas:"", alimentacaoVia:"", dieta:"",
+    dispositivos:"", medicamentos:"", insumos:"", medicamentosLista:[], insumosLista:[],
+    cuidadorAvaliacao:"", conduta:"", orientacoes:"", sinaisAlerta:"", retorno:"",
+    soapS:"", soapO:"", soapA:"", soapP:""
+  }, data || {});
+  if(!Array.isArray(vd.medicamentosLista)) vd.medicamentosLista = [];
+  if(!Array.isArray(vd.insumosLista)) vd.insumosLista = [];
+  if(vd.medicamentos && !vd.medicamentosLista.length) vd.medicamentosLista = [{nome:vd.medicamentos, horario:"", via:"", quantidade:"", receita:"Não conferida"}];
+  if(vd.insumos && !vd.insumosLista.length) vd.insumosLista = [{item:vd.insumos, quantidade:"", suficiente:"", solicitar:"", obs:""}];
+  if(data && data.soap){
+    vd.soapS = vd.soapS || data.soap.s || "";
+    vd.soapO = vd.soapO || data.soap.o || "";
+    vd.soapA = vd.soapA || data.soap.a || "";
+    vd.soapP = vd.soapP || data.soap.p || "";
+  }
+  return vd;
+}
+function vdInput(id,label,value,type){
+  return `<div class="form-field"><label>${label}</label><input id="f_vd_${id}" type="${type||"text"}" value="${escapeHtml(value)}"></div>`;
+}
+function vdTextarea(id,label,value,rows){
+  return `<div class="form-field full"><label>${label}</label><textarea id="f_vd_${id}" rows="${rows||2}">${escapeHtml(value)}</textarea></div>`;
+}
+function vdSelect(id,label,value,options){
+  return `<div class="form-field"><label>${label}</label><select id="f_vd_${id}"><option value="">—</option>${options.map(o=>`<option ${value===o?"selected":""}>${escapeHtml(o)}</option>`).join("")}</select></div>`;
+}
+function visitaJsArg(obj){ return escapeHtml(JSON.stringify(obj || {})); }
+function visitaMedRowHtml(m){
+  m = Object.assign({nome:"",horario:"",via:"VO",quantidade:"",receita:"Não conferida"}, m || {});
+  const vias = ["VO","Sonda","SC","IM","EV","Tópica","Inalatória","Ocular","Outro"];
+  const receitas = ["Sim","Não","Não conferida"];
+  return `<tr class="vd-med-row">
+    <td><input class="vd-med-nome" value="${escapeHtml(m.nome)}" placeholder="Nome"></td>
+    <td><input class="vd-med-horario" value="${escapeHtml(m.horario)}" placeholder="Ex: 08h / 20h"></td>
+    <td><select class="vd-med-via">${vias.map(v=>`<option ${m.via===v?"selected":""}>${v}</option>`).join("")}</select></td>
+    <td><input class="vd-med-quantidade" value="${escapeHtml(m.quantidade)}" placeholder="Ex: 12 comp."></td>
+    <td><select class="vd-med-receita">${receitas.map(v=>`<option ${m.receita===v?"selected":""}>${v}</option>`).join("")}</select></td>
+    <td class="row-remove"><button class="btn btn-danger btn-sm" type="button" onclick="this.closest('tr').remove()">Remover</button></td>
+  </tr>`;
+}
+function visitaInsumoRowHtml(item){
+  item = Object.assign({item:"",quantidade:"",suficiente:"",solicitar:"",obs:""}, item || {});
+  const suficientes = ["","Sim","Não","Parcial"];
+  const solicitar = ["","Não","Sim"];
+  return `<tr class="vd-insumo-row">
+    <td><input class="vd-insumo-item" value="${escapeHtml(item.item)}" placeholder="Item"></td>
+    <td><input class="vd-insumo-quantidade" value="${escapeHtml(item.quantidade)}" placeholder="Ex: 18 un."></td>
+    <td><select class="vd-insumo-suficiente">${suficientes.map(v=>`<option ${item.suficiente===v?"selected":""}>${v}</option>`).join("")}</select></td>
+    <td><select class="vd-insumo-solicitar">${solicitar.map(v=>`<option ${item.solicitar===v?"selected":""}>${v}</option>`).join("")}</select></td>
+    <td><input class="vd-insumo-obs" value="${escapeHtml(item.obs)}" placeholder="Tamanho, marca, observação"></td>
+    <td class="row-remove"><button class="btn btn-danger btn-sm" type="button" onclick="this.closest('tr').remove()">Remover</button></td>
+  </tr>`;
+}
+function adicionarMedicamentoVisita(dados){
+  document.getElementById("vdMedBody")?.insertAdjacentHTML("beforeend", visitaMedRowHtml(dados));
+}
+function adicionarInsumoVisita(dados){
+  document.getElementById("vdInsumoBody")?.insertAdjacentHTML("beforeend", visitaInsumoRowHtml(dados));
+}
+function inserirTextoVisita(id,texto){
+  const el = document.getElementById("f_vd_"+id);
+  if(!el) return;
+  const atual = el.value.trim();
+  el.value = atual ? `${atual}\n${texto}` : texto;
+  el.focus();
+}
+function escalaValor(vd,id){ return vd.escalas?.[id] ?? ""; }
+function scaleSelect(id,label,options,vd){
+  const value = String(escalaValor(vd,id));
+  return `<div class="form-field"><label>${label}</label><select id="scale_${id}" class="vd-scale-field">${options.map(([v,t])=>`<option value="${v}" ${value===String(v)?"selected":""}>${escapeHtml(t)}</option>`).join("")}</select></div>`;
+}
+function scaleInput(id,label,vd,placeholder){
+  return `<div class="form-field"><label>${label}</label><input id="scale_${id}" class="vd-scale-field" type="number" step="1" value="${escapeHtml(escalaValor(vd,id))}" placeholder="${escapeHtml(placeholder||"")}"></div>`;
+}
+function scaleCard(id,title,ref,inner){
+  return `<div class="scale-card" data-scale-card="${id}"><h6>${title}</h6><div class="scale-ref">${ref}</div>${inner}<div class="scale-result" id="scale_result_${id}">Preencha a escala para calcular.</div></div>`;
+}
+function escalaOpcoesSimNao(){ return [["","—"],["1","Sim"],["0","Não"]]; }
+function escalasVisitaHtml(vd){
+  const o4=[["","—"],["1","1"],["2","2"],["3","3"],["4","4"]], o3=[["","—"],["1","1"],["2","2"],["3","3"]];
+  const braden = scaleCard("braden","Braden - risco de lesão por pressão","Acamado, cadeirante, baixa mobilidade, ferida, fralda/umidade ou risco de pele. Total 6-23; menor pontuação = maior risco.",`<div class="scale-grid">${scaleSelect("braden_sensorial","Percepção sensorial",o4,vd)}${scaleSelect("braden_umidade","Umidade",o4,vd)}${scaleSelect("braden_atividade","Atividade",o4,vd)}${scaleSelect("braden_mobilidade","Mobilidade",o4,vd)}${scaleSelect("braden_nutricao","Nutrição",o4,vd)}${scaleSelect("braden_friccao","Fricção/cisalhamento",o3,vd)}</div>`);
+  const norton = scaleCard("norton","Norton - risco de lesão por pressão","Alternativa rápida para imóveis, idosos frágeis, acamados ou incontinência. Total 5-20; <14 sugere alto risco.",`<div class="scale-grid">${scaleSelect("norton_condicao","Condição física",o4,vd)}${scaleSelect("norton_mental","Estado mental",o4,vd)}${scaleSelect("norton_atividade","Atividade",o4,vd)}${scaleSelect("norton_mobilidade","Mobilidade",o4,vd)}${scaleSelect("norton_incontinencia","Incontinência",o4,vd)}</div>`);
+  const morse = scaleCard("morse","Morse - risco de queda","Todo paciente que deambula ou tenta levantar sozinho. 0-24 baixo; 25-44 moderado; >=45 alto.",`<div class="scale-grid">${scaleSelect("morse_queda","Queda recente",[["","—"],["0","Não (0)"],["25","Sim (25)"]],vd)}${scaleSelect("morse_diag","Diagnóstico secundário",[["","—"],["0","Não (0)"],["15","Sim (15)"]],vd)}${scaleSelect("morse_apoio","Auxílio para deambular",[["","—"],["0","Nenhum/acamado/auxílio profissional (0)"],["15","Bengala/muleta/andador (15)"],["30","Apoia-se em móveis (30)"]],vd)}${scaleSelect("morse_ev","Terapia EV/heparina",[["","—"],["0","Não (0)"],["20","Sim (20)"]],vd)}${scaleSelect("morse_marcha","Marcha",[["","—"],["0","Normal/acamado/cadeira (0)"],["10","Fraca (10)"],["20","Comprometida (20)"]],vd)}${scaleSelect("morse_mental","Estado mental",[["","—"],["0","Orientado quanto à capacidade (0)"],["15","Superestima/esquece limitações (15)"]],vd)}</div>`);
+  const tug = scaleCard("tug","TUG - Timed Up and Go","Para quem levanta e anda. Cronometrar levantar, andar 3 m, voltar e sentar. >=13,5 s sugere maior risco de queda.",`<div class="scale-grid">${scaleInput("tug_segundos","Tempo em segundos",vd,"13")}</div>`);
+  const tinetti = scaleCard("tinetti","Tinetti/POMA - equilíbrio e marcha","Marcha instável, queda prévia, medo de cair ou uso de apoio. Total 0-28; 25-28 baixo; 19-24 médio; <19 alto.",`<div class="scale-grid">${scaleInput("tinetti_total","Pontuação total 0-28",vd,"28")}</div>`);
+  const katz = scaleCard("katz","Katz - atividades básicas de vida diária","Visita inicial e dependência funcional. 6 independente; 4 prejuízo moderado; <=2 prejuízo grave.",`<div class="scale-grid">${["Banho","Vestir-se","Uso do banheiro","Transferência","Continência","Alimentação"].map((l,i)=>scaleSelect(`katz_${i}`,l,escalaOpcoesSimNao(),vd)).join("")}</div>`);
+  const barthel = scaleCard("barthel","Barthel - dependência funcional","Acamados, reabilitação, neurológicos, idosos e pós-internação. 0-20 total; 21-60 severa; 61-90 moderada; 91-99 leve; 100 independente.",`<div class="scale-grid">${scaleSelect("barthel_alim","Alimentação",[["","—"],["0","0"],["5","5"],["10","10"]],vd)}${scaleSelect("barthel_banho","Banho",[["","—"],["0","0"],["5","5"]],vd)}${scaleSelect("barthel_higiene","Higiene pessoal",[["","—"],["0","0"],["5","5"]],vd)}${scaleSelect("barthel_vestir","Vestir-se",[["","—"],["0","0"],["5","5"],["10","10"]],vd)}${scaleSelect("barthel_intestino","Intestino",[["","—"],["0","0"],["5","5"],["10","10"]],vd)}${scaleSelect("barthel_bexiga","Bexiga",[["","—"],["0","0"],["5","5"],["10","10"]],vd)}${scaleSelect("barthel_banheiro","Uso do banheiro",[["","—"],["0","0"],["5","5"],["10","10"]],vd)}${scaleSelect("barthel_transfer","Transferência",[["","—"],["0","0"],["5","5"],["10","10"],["15","15"]],vd)}${scaleSelect("barthel_mob","Mobilidade",[["","—"],["0","0"],["5","5"],["10","10"],["15","15"]],vd)}${scaleSelect("barthel_escadas","Escadas",[["","—"],["0","0"],["5","5"],["10","10"]],vd)}</div>`);
+  const lawton = scaleCard("lawton","Lawton-Brody - atividades instrumentais","Idoso não acamado ou semi-independente. 0 baixa função/dependente; 8 alta função/independente.",`<div class="scale-grid">${["Telefone","Compras","Preparo de alimentos","Casa","Lavanderia","Transporte","Medicações","Finanças"].map((l,i)=>scaleSelect(`lawton_${i}`,l,escalaOpcoesSimNao(),vd)).join("")}</div>`);
+  const mna = scaleCard("mna","MNA-SF - risco nutricional","Idosos, acamados, feridas, baixa ingesta, perda de peso, disfagia ou sonda. 12-14 normal; 8-11 risco; 0-7 desnutrido.",`<div class="scale-grid">${scaleSelect("mna_ingesta","Redução da ingesta",[["","—"],["0","Grave (0)"],["1","Moderada (1)"],["2","Sem redução (2)"]],vd)}${scaleSelect("mna_peso","Perda de peso",[["","—"],["0",">3 kg (0)"],["1","Não sabe (1)"],["2","1 a 3 kg (2)"],["3","Sem perda (3)"]],vd)}${scaleSelect("mna_mob","Mobilidade",[["","—"],["0","Restrito ao leito/cadeira (0)"],["1","Sai da cama/cadeira, não sai de casa (1)"],["2","Sai de casa (2)"]],vd)}${scaleSelect("mna_estresse","Doença aguda/estresse",[["","—"],["0","Sim (0)"],["2","Não (2)"]],vd)}${scaleSelect("mna_neuro","Problema neuropsicológico",[["","—"],["0","Demência/depressão grave (0)"],["1","Demência leve (1)"],["2","Sem problema (2)"]],vd)}${scaleSelect("mna_imc","IMC ou panturrilha",[["","—"],["0","IMC <19 ou panturrilha <31 (0)"],["1","IMC 19 a <21 (1)"],["2","IMC 21 a <23 (2)"],["3","IMC >=23 ou panturrilha adequada (3)"]],vd)}</div>`);
+  const eva = scaleCard("eva","EVA/NRS - dor referida","Toda visita quando o paciente comunica dor. 0 sem dor; 1-3 leve; 4-6 moderada; 7-10 intensa.",`<div class="scale-grid">${scaleInput("eva_total","Nota da dor 0-10",vd,"0")}</div>`);
+  const painad = scaleCard("painad","PAINAD - dor em não comunicativo/demência avançada","Quando o paciente não comunica dor de forma confiável. 0 sem sinais; 1-3 leve; 4-6 moderada; 7-10 severa.",`<div class="scale-grid">${["Respiração","Vocalização negativa","Expressão facial","Linguagem corporal","Consolabilidade"].map((l,i)=>scaleSelect(`painad_${i}`,l,[["","—"],["0","0"],["1","1"],["2","2"]],vd)).join("")}</div>`);
+  const glasgow = scaleCard("glasgow","Glasgow - nível de consciência","Rebaixamento, trauma, AVC, sepse, sedação, pós-convulsão ou alteração neurológica. Total 3-15.",`<div class="scale-grid">${scaleSelect("glasgow_ocular","Abertura ocular",[["","—"],["4","Espontânea (4)"],["3","Ao comando verbal (3)"],["2","À dor (2)"],["1","Ausente (1)"]],vd)}${scaleSelect("glasgow_verbal","Resposta verbal",[["","—"],["5","Orientada (5)"],["4","Confusa (4)"],["3","Palavras inapropriadas (3)"],["2","Sons incompreensíveis (2)"],["1","Ausente (1)"]],vd)}${scaleSelect("glasgow_motora","Resposta motora",[["","—"],["6","Obedece comandos (6)"],["5","Localiza dor (5)"],["4","Retirada à dor (4)"],["3","Flexão anormal (3)"],["2","Extensão anormal (2)"],["1","Ausente (1)"]],vd)}</div>`);
+  const cam = scaleCard("cam","CAM - rastreamento de delirium","Idoso com confusão aguda, sonolência, agitação, flutuação, infecção, desidratação ou polifarmácia.",`<div class="scale-grid">${scaleSelect("cam_agudo","Início agudo/flutuação",escalaOpcoesSimNao(),vd)}${scaleSelect("cam_desatencao","Desatenção",escalaOpcoesSimNao(),vd)}${scaleSelect("cam_pensamento","Pensamento desorganizado",escalaOpcoesSimNao(),vd)}${scaleSelect("cam_consciencia","Alteração do nível de consciência",escalaOpcoesSimNao(),vd)}</div>`);
+  const gds = scaleCard("gds","GDS-15 - sintomas depressivos em idosos","Idoso triste, isolado, apático, perda de interesse ou queixa funcional sem causa clara. 0-4 normal; 5-8 leve; 9-11 moderada; 12-15 severa.",`<div class="scale-grid">${scaleInput("gds_total","Pontuação total 0-15",vd,"0")}</div>`);
+  const cfs = scaleCard("cfs","CFS - fragilidade clínica","Todo idoso em avaliação inicial. 1 muito apto; 4 vulnerável; 5 leve; 6 moderada; 7 severa; 8 muito severa; 9 terminal.",`<div class="scale-grid">${scaleSelect("cfs_total","Fragilidade 1-9",[["","—"],["1","1 - Muito apto"],["2","2 - Bem"],["3","3 - Controlado"],["4","4 - Vulnerável"],["5","5 - Fragilidade leve"],["6","6 - Fragilidade moderada"],["7","7 - Fragilidade severa"],["8","8 - Muito severa"],["9","9 - Terminal"]],vd)}</div>`);
+  const pps = scaleCard("pps","PPS - Palliative Performance Scale","Paciente paliativo, oncológico, neurológico grave, acamado crônico ou fim de vida. Queda indica declínio funcional.",`<div class="scale-grid">${scaleSelect("pps_total","PPS",[["","—"],["100","100%"],["90","90%"],["80","80%"],["70","70%"],["60","60%"],["50","50%"],["40","40%"],["30","30%"],["20","20%"],["10","10%"],["0","0%"]],vd)}</div>`);
+  return `<div class="visit-block" id="vdEscalasBlock"><h5>Escalas de enfermagem</h5><div class="visit-note">As escalas aparecem conforme a triagem da visita. Ex.: acamado libera Braden, Norton, Barthel/Katz, MNA-SF e dor; deambula libera Morse; queda/marcha ruim libera TUG/Tinetti.</div><div id="vdScaleHint" class="scale-result">Marque a condição do paciente para liberar as escalas aplicáveis.</div>${[braden,norton,morse,tug,tinetti,katz,barthel,lawton,mna,eva,painad,glasgow,cam,gds,cfs,pps].join("")}</div>`;
+}
+function lerEscalasVisita(root=document){
+  const escalas = {};
+  root.querySelectorAll(".vd-scale-field").forEach(el=>{ escalas[el.id.replace(/^scale_/,"")] = el.value; });
+  return escalas;
+}
+function somaEscala(root,ids){
+  const vals = ids.map(id=>root.querySelector("#scale_"+id)?.value).filter(v=>v!=="");
+  if(!vals.length) return null;
+  return vals.reduce((a,v)=>a+(Number(v)||0),0);
+}
+function valorEscala(root,id){
+  const v = root.querySelector("#scale_"+id)?.value;
+  return v==="" || v===undefined ? null : Number(v);
+}
+function marcarResultadoEscala(root,id,texto,tone){
+  const el = root.querySelector("#scale_result_"+id);
+  if(!el) return;
+  el.className = "scale-result" + (tone ? " " + tone : "");
+  el.textContent = texto || "Preencha a escala para calcular.";
+}
+function calcularEscalasVisita(root=document){
+  const ativos = new Set(Array.from(root.querySelectorAll(".scale-card.active")).map(x=>x.dataset.scaleCard));
+  const resultados = [];
+  const add=(id,nome,total,interp,tone)=>{ if(ativos.has(id) && total!==null && total!==undefined && total!==""){ const texto=`${nome}: ${total} - ${interp}`; resultados.push({id,nome,total,interp,texto,tone:tone||""}); marcarResultadoEscala(root,id,texto,tone); } else if(ativos.has(id)) marcarResultadoEscala(root,id,"Preencha a escala para calcular."); };
+  let t;
+  t=somaEscala(root,["braden_sensorial","braden_umidade","braden_atividade","braden_mobilidade","braden_nutricao","braden_friccao"]);
+  add("braden","Braden",t,t===null?"":t<=9?"risco muito alto de lesão por pressão":t<=12?"alto risco de lesão por pressão":t<=14?"risco moderado":t<=18?"risco leve":"sem/baixo risco",t!==null&&t<=12?"danger":t!==null&&t<=18?"warn":"");
+  t=somaEscala(root,["norton_condicao","norton_mental","norton_atividade","norton_mobilidade","norton_incontinencia"]);
+  add("norton","Norton",t,t===null?"":t<14?"alto risco de lesão por pressão":"baixo risco pela escala",t!==null&&t<14?"danger":"");
+  t=somaEscala(root,["morse_queda","morse_diag","morse_apoio","morse_ev","morse_marcha","morse_mental"]);
+  add("morse","Morse",t,t===null?"":t>=45?"alto risco de queda":t>=25?"risco moderado de queda":"baixo risco de queda",t!==null&&t>=45?"danger":t!==null&&t>=25?"warn":"");
+  t=valorEscala(root,"tug_segundos");
+  add("tug","TUG",t,t===null?"":t>=13.5?"maior risco de queda":"sem ponto de corte elevado",t!==null&&t>=13.5?"warn":"");
+  t=valorEscala(root,"tinetti_total");
+  add("tinetti","Tinetti/POMA",t,t===null?"":t<19?"alto risco de queda":t<=24?"risco médio de queda":"baixo risco de queda",t!==null&&t<19?"danger":t!==null&&t<=24?"warn":"");
+  t=somaEscala(root,["katz_0","katz_1","katz_2","katz_3","katz_4","katz_5"]);
+  add("katz","Katz",t,t===null?"":t<=2?"prejuízo grave/dependência importante":t<=4?"prejuízo moderado":"independente nas AVDs",t!==null&&t<=2?"danger":t!==null&&t<=4?"warn":"");
+  t=somaEscala(root,["barthel_alim","barthel_banho","barthel_higiene","barthel_vestir","barthel_intestino","barthel_bexiga","barthel_banheiro","barthel_transfer","barthel_mob","barthel_escadas"]);
+  add("barthel","Barthel",t,t===null?"":t<=20?"dependência total":t<=60?"dependência severa":t<=90?"dependência moderada":t<=99?"dependência leve":"independente",t!==null&&t<=60?"danger":t!==null&&t<=90?"warn":"");
+  t=somaEscala(root,["lawton_0","lawton_1","lawton_2","lawton_3","lawton_4","lawton_5","lawton_6","lawton_7"]);
+  add("lawton","Lawton-Brody",t,t===null?"":t<=3?"baixa função/dependência importante":t<=6?"dependência parcial":"alta função/independência",t!==null&&t<=3?"danger":t!==null&&t<=6?"warn":"");
+  t=somaEscala(root,["mna_ingesta","mna_peso","mna_mob","mna_estresse","mna_neuro","mna_imc"]);
+  add("mna","MNA-SF",t,t===null?"":t<=7?"desnutrido":t<=11?"risco de desnutrição":"estado nutricional normal",t!==null&&t<=7?"danger":t!==null&&t<=11?"warn":"");
+  t=valorEscala(root,"eva_total");
+  add("eva","EVA/NRS dor",t,t===null?"":t>=7?"dor intensa":t>=4?"dor moderada":t>=1?"dor leve":"sem dor",t!==null&&t>=7?"danger":t!==null&&t>=4?"warn":"");
+  t=somaEscala(root,["painad_0","painad_1","painad_2","painad_3","painad_4"]);
+  add("painad","PAINAD",t,t===null?"":t>=7?"dor severa":t>=4?"dor moderada":t>=1?"dor leve":"sem sinais observáveis de dor",t!==null&&t>=7?"danger":t!==null&&t>=4?"warn":"");
+  t=somaEscala(root,["glasgow_ocular","glasgow_verbal","glasgow_motora"]);
+  add("glasgow","Glasgow",t,t===null?"":t<=8?"grave/coma no contexto clínico":t<=12?"alteração moderada":t<=14?"alteração leve":"alerta/responsivo",t!==null&&t<=8?"danger":t!==null&&t<=14?"warn":"");
+  const camA=valorEscala(root,"cam_agudo"), camD=valorEscala(root,"cam_desatencao"), camP=valorEscala(root,"cam_pensamento"), camC=valorEscala(root,"cam_consciencia");
+  if(ativos.has("cam") && [camA,camD,camP,camC].some(v=>v!==null)){ const positivo=camA===1&&camD===1&&(camP===1||camC===1); add("cam","CAM",positivo?"positivo":"negativo",positivo?"suspeita de delirium":"sem critério completo para CAM positivo",positivo?"danger":""); }
+  t=valorEscala(root,"gds_total");
+  add("gds","GDS-15",t,t===null?"":t>=12?"sintomas severos":t>=9?"sintomas moderados":t>=5?"sintomas leves":"normal",t!==null&&t>=12?"danger":t!==null&&t>=5?"warn":"");
+  t=valorEscala(root,"cfs_total");
+  add("cfs","CFS",t,t===null?"":t>=8?"fragilidade muito severa/terminal":t>=7?"fragilidade severa":t>=6?"fragilidade moderada":t>=5?"fragilidade leve":t>=4?"vulnerável":"baixo grau de fragilidade",t!==null&&t>=7?"danger":t!==null&&t>=5?"warn":"");
+  t=valorEscala(root,"pps_total");
+  add("pps","PPS",t===null?null:`${t}%`,t===null?"":t<=30?"grave dependência/acamado":t<=50?"grande dependência":t<=70?"redução funcional importante":"funcionalidade preservada/leve redução",t!==null&&t<=30?"danger":t!==null&&t<=50?"warn":"");
+  return resultados;
+}
+function atualizarEscalasVisita(root=document){
+  const v=id=>(root.querySelector("#f_vd_"+id)?.value||"");
+  const texto=normalizarTexto([v("acamado"),v("mobilidade"),v("adl"),v("feridas"),v("pele"),v("feridaUmidade"),v("deambula"),v("quedaRecente"),v("apoioMarcha"),v("marchaAlterada"),v("idoso"),v("baixaIngesta"),v("alimentacaoVia"),v("dieta"),v("comunicaDor"),v("paliativo"),v("confusaoAguda"),v("consciencia"),v("sintomasDepressivos"),v("humor")].join(" "));
+  const acamado=/acamado|restrito|cadeirante|dependencia total|não deambula|nao deambula|baixa mobilidade/.test(texto);
+  const pele=normalizarTexto(v("feridaUmidade"))==="sim" || /ferida|lpp|fralda|umidade|pele/.test(texto);
+  const deambula=/deambula|levantar|apoio|andador|bengala/.test(texto) && !/não deambula|nao deambula|acamado/.test(normalizarTexto(v("deambula")));
+  const queda=["quedaRecente","apoioMarcha","marchaAlterada"].some(id=>normalizarTexto(v(id))==="sim") || /queda|andador|bengala|marcha|inseguran/.test(texto);
+  const idoso=normalizarTexto(v("idoso"))==="sim";
+  const nutricao=idoso||acamado||pele||normalizarTexto(v("baixaIngesta"))==="sim"||/perda|ingesta|disfagia|sonda|gastrostomia|jejunostomia|sne|sng|come pouco/.test(texto);
+  const comunicaDor=v("comunicaDor") || "Sim";
+  const naoComunica=/não|nao|parcial/.test(normalizarTexto(comunicaDor));
+  const confusao=normalizarTexto(v("confusaoAguda"))==="sim"||/confus|sonol|agit|rebaixado|delirium/.test(texto);
+  const paliativo=normalizarTexto(v("paliativo"))==="sim";
+  const depressivo=idoso && (normalizarTexto(v("sintomasDepressivos"))==="sim" || /triste|isol|apat|perda de interesse/.test(normalizarTexto(v("humor"))));
+  const show={braden:acamado||pele,norton:acamado||pele,katz:true,barthel:true,mna:nutricao,morse:deambula,tug:deambula&&queda,tinetti:deambula&&queda,lawton:idoso&&!acamado,eva:!naoComunica,painad:naoComunica,glasgow:confusao,cam:confusao,gds:depressivo,cfs:idoso,pps:paliativo};
+  Object.entries(show).forEach(([id,on])=>root.querySelector(`[data-scale-card="${id}"]`)?.classList.toggle("active",!!on));
+  const abertas=Object.entries(show).filter(([,on])=>on).map(([id])=>id.toUpperCase());
+  const hint=root.querySelector("#vdScaleHint");
+  if(hint) hint.textContent = abertas.length ? `Escalas liberadas: ${abertas.join(", ")}.` : "Marque a condição do paciente para liberar as escalas aplicáveis.";
+  calcularEscalasVisita(root);
+}
+function inicializarEscalasVisita(body){
+  atualizarEscalasVisita(body);
+  const refresh=e=>{ if(e.target?.id?.startsWith("f_vd_") || e.target?.classList?.contains("vd-scale-field")) atualizarEscalasVisita(body); };
+  body.addEventListener("change",refresh);
+  body.addEventListener("input",refresh);
+}
+window.adicionarMedicamentoVisita = adicionarMedicamentoVisita;
+window.adicionarInsumoVisita = adicionarInsumoVisita;
+window.inserirTextoVisita = inserirTextoVisita;
+function visitaDomiciliarHtml(vdData){
+  const vd = defaultVisitaDomiciliarData(vdData);
+  const meds = vd.medicamentosLista.map(visitaMedRowHtml).join("");
+  const insumos = vd.insumosLista.map(visitaInsumoRowHtml).join("");
+  const medRapidos = ["Losartana","Hidroclorotiazida","Atenolol","Metformina","Insulina","AAS","Sinvastatina","Omeprazol","Dipirona","Paracetamol","Sertralina","Clonazepam"];
+  const insumoRapidos = ["Fralda","Luvas","Gazes","Soro fisiológico","Cobertura de curativo","Lenço umedecido","Creme barreira","Fitas de glicemia","Lancetas","Seringas","Equipo/frascos de dieta","Material para sonda","Álcool 70","Máscara"];
+  const medButtons = medRapidos.map(nome=>`<button type="button" onclick='adicionarMedicamentoVisita(${visitaJsArg({nome,via:"VO",receita:"Não conferida"})})'>${escapeHtml(nome)}</button>`).join("");
+  const insumoButtons = insumoRapidos.map(item=>`<button type="button" onclick='adicionarInsumoVisita(${visitaJsArg({item,suficiente:"",solicitar:""})})'>${escapeHtml(item)}</button>`).join("");
+  return `
+    <div class="visit-clinical">
+      <h4>Visita domiciliar e SOAP</h4>
+      <div class="visit-clinical-sub">Registro operacional da Mãos Amigas: rotina do cuidado, cuidador, medicações, insumos, segurança do domicílio e plano de acompanhamento.</div>
+      <div class="visit-block soap-import">
+        <h5>SOAP feito no celular</h5>
+        <div class="visit-note">Cole aqui o SOAP pronto. O sistema vai separar S/O/A/P e tentar preencher os campos clínicos da visita.</div>
+        <div class="form-field full"><textarea id="f_vd_importSoap" placeholder="Cole aqui o SOAP do celular..."></textarea></div>
+        <div class="visit-actions">
+          <button class="btn btn-primary" type="button" id="btnInterpretarSOAPVisita">Entender SOAP e preencher</button>
+          <button class="btn btn-ghost" type="button" id="btnColarSOAPVisita">Colar da área de transferência</button>
+        </div>
+      </div>
+      <details class="visit-accordion" open>
+        <summary>1. Essencial da visita</summary>
+        <div class="visit-accordion-body">
+          ${vdSelect("tipoVisita","Tipo de visita",vd.tipoVisita,["Rotina/acompanhamento","Primeira visita","Acamado/restrito ao leito","Pós-alta hospitalar","Curativo/LPP/ferida","Sonda/dispositivo","Idoso frágil","Busca ativa","Cuidador sobrecarregado","Condição social/vulnerabilidade"])}
+          ${vdInput("motivo","Motivo da visita",vd.motivo)}
+          ${vdTextarea("queixa","Queixa principal / demanda da família",vd.queixa,2)}
+          ${vdTextarea("historia","História e contexto da visita",vd.historia,2)}
+          ${vdInput("responsavelPresente","Responsável presente na visita",vd.responsavelPresente)}
+          ${vdInput("cuidador","Cuidador principal",vd.cuidador)}
+          ${vdInput("parentescoCuidador","Parentesco",vd.parentescoCuidador)}
+          ${vdInput("telefoneCuidador","Telefone do cuidador",vd.telefoneCuidador)}
+          ${vdTextarea("redeApoio","Rede de apoio / familiares envolvidos",vd.redeApoio,2)}
+          ${vdTextarea("ambiente","Condição geral do domicílio",vd.ambiente,2)}
+          ${vdTextarea("riscoAmbiente","Riscos do ambiente observados",vd.riscoAmbiente,2)}
+          ${vdSelect("acamado","Paciente acamado",vd.acamado,["Não","Sim","Restrito ao leito parcialmente"])}
+          ${vdSelect("mobilidade","Mobilidade",vd.mobilidade,["Deambula sem auxílio","Deambula com auxílio","Cadeirante","Restrito ao leito","Acamado"])}
+          ${vdSelect("adl","Dependência para atividades diárias",vd.adl,["Independente","Dependência parcial","Dependência total"])}
+          ${vdSelect("consciencia","Nível de consciência",vd.consciencia,["Lúcido/orientado","Sonolento","Confuso","Rebaixado"])}
+          ${vdTextarea("humor","Humor / comportamento durante a visita",vd.humor,2)}
+          ${vdTextarea("dor","Dor ou desconforto referido",vd.dor,2)}
+          ${vdInput("pa","PA",vd.pa)}
+          ${vdInput("fc","FC",vd.fc,"number")}
+          ${vdInput("fr","FR",vd.fr,"number")}
+          ${vdInput("sat","SpO2",vd.sat,"number")}
+          ${vdInput("temp","Temperatura",vd.temp,"number")}
+          ${vdInput("glicemia","Glicemia capilar",vd.glicemia,"number")}
+          ${vdTextarea("higiene","Higiene, banho, troca e conforto",vd.higiene,2)}
+          ${vdTextarea("eliminacoes","Eliminações / fralda / evacuação / diurese",vd.eliminacoes,2)}
+          ${vdTextarea("rotinaSono","Sono, repouso e rotina diária",vd.rotinaSono,2)}
+          ${vdTextarea("pele","Pele, lesões e risco de LPP",vd.pele,2)}
+          ${vdTextarea("feridas","Feridas / LPP / curativos",vd.feridas,2)}
+          ${vdSelect("alimentacaoVia","Via de alimentação",vd.alimentacaoVia,["Oral","SNE / SNG","Gastrostomia","Jejunostomia","Parenteral","Mista"])}
+          ${vdTextarea("dieta","Dieta, aceitação e hidratação",vd.dieta,2)}
+          ${vdTextarea("dispositivos","Dispositivos, sondas e ostomias",vd.dispositivos,2)}
+        </div>
+      </details>
+      <details class="visit-accordion">
+        <summary>2. Triagem e escalas</summary>
+        <div class="visit-accordion-body">
+        <div class="visit-block">
+          <h5>Triagem para liberar escalas</h5>
+          <div class="scale-grid">
+            ${vdSelect("idoso","Paciente idoso?",vd.idoso,["Não","Sim"])}
+            ${vdSelect("deambula","Deambulação",vd.deambula,["Não deambula / acamado","Deambula com ajuda","Deambula sozinho","Tenta levantar sozinho"])}
+            ${vdSelect("quedaRecente","Queda nos últimos 3-6 meses?",vd.quedaRecente,["Não","Sim"])}
+            ${vdSelect("apoioMarcha","Usa bengala, andador ou apoio?",vd.apoioMarcha,["Não","Sim"])}
+            ${vdSelect("marchaAlterada","Marcha instável, medo de cair ou insegurança?",vd.marchaAlterada,["Não","Sim"])}
+            ${vdSelect("feridaUmidade","Ferida, fralda, umidade ou risco de pele?",vd.feridaUmidade,["Não","Sim"])}
+            ${vdSelect("baixaIngesta","Perda de peso, baixa ingesta, disfagia ou sonda?",vd.baixaIngesta,["Não","Sim"])}
+            ${vdSelect("comunicaDor","Consegue comunicar dor?",vd.comunicaDor,["Sim","Não","Parcial"])}
+            ${vdSelect("paliativo","Paciente em cuidado paliativo?",vd.paliativo,["Não","Sim"])}
+            ${vdSelect("confusaoAguda","Confusão aguda, sonolência, agitação ou rebaixamento?",vd.confusaoAguda,["Não","Sim"])}
+            ${vdSelect("sintomasDepressivos","Tristeza, isolamento, apatia ou perda de interesse?",vd.sintomasDepressivos,["Não","Sim"])}
+          </div>
+        </div>
+        ${escalasVisitaHtml(vd)}
+        </div>
+      </details>
+      <details class="visit-accordion" open>
+        <summary>3. Medicações e insumos</summary>
+        <div class="visit-accordion-body">
+        <div class="visit-block">
+          <h5>Medicações no domicílio</h5>
+          <div class="quick-actions">${medButtons}<button type="button" onclick="adicionarMedicamentoVisita()">+ Medicação livre</button></div>
+          <div class="dynamic-table-wrap"><table class="dynamic-table">
+            <thead><tr><th>Nome medicação</th><th>Horário administração</th><th>Via de Adm</th><th>Quantos remédios tem ainda</th><th>Verificado receita?</th><th></th></tr></thead>
+            <tbody id="vdMedBody">${meds}</tbody>
+          </table></div>
+          <div class="visit-note">Não altera prescrição. Use apenas para conferir organização, disponibilidade e necessidade de avisar responsável/coordenação.</div>
+        </div>
+        <div class="visit-block">
+          <h5>Insumos no domicílio</h5>
+          <div class="quick-actions">${insumoButtons}<button type="button" onclick="adicionarInsumoVisita()">+ Insumo livre</button></div>
+          <div class="dynamic-table-wrap"><table class="dynamic-table">
+            <thead><tr><th>Insumo</th><th>Quantia</th><th>Suficiente?</th><th>Solicitar?</th><th>Observação</th><th></th></tr></thead>
+            <tbody id="vdInsumoBody">${insumos}</tbody>
+          </table></div>
+        </div>
+        </div>
+      </details>
+      <details class="visit-accordion" open>
+        <summary>4. Conduta, orientação e SOAP</summary>
+        <div class="visit-accordion-body">
+        <div class="visit-block">
+          <h5>Atalhos de cuidados e orientações</h5>
+          <div class="quick-actions">
+            <button type="button" onclick="inserirTextoVisita('conduta','Mudança de decúbito orientada e combinada com cuidador.')">Mudança de decúbito</button>
+            <button type="button" onclick="inserirTextoVisita('conduta','Higiene, troca e conforto avaliados durante a visita.')">Higiene e conforto</button>
+            <button type="button" onclick="inserirTextoVisita('conduta','Pele avaliada, com orientação para manter limpa, seca e observar áreas de pressão.')">Cuidados com pele</button>
+            <button type="button" onclick="inserirTextoVisita('conduta','Medicações organizadas por horário e disponibilidade conferida no domicílio.')">Organização de medicações</button>
+            <button type="button" onclick="inserirTextoVisita('orientacoes','Orientado manter hidratação, alimentação conforme rotina familiar e conforto no leito/cadeira.')">Hidratação e conforto</button>
+            <button type="button" onclick="inserirTextoVisita('orientacoes','Orientado responsável sobre necessidade de reposição de itens marcados como insuficientes.')">Reposição de itens</button>
+            <button type="button" onclick="inserirTextoVisita('sinaisAlerta','Orientado acionar responsável/coordenação e buscar serviço de saúde em caso de febre, falta de ar, queda, confusão, sonolência importante, dor forte, sangramento ou piora do estado geral.')">Sinais de alerta</button>
+          </div>
+        </div>
+        ${vdTextarea("cuidadorAvaliacao","Avaliação do cuidador / família",vd.cuidadorAvaliacao,2)}
+        ${vdTextarea("conduta","Cuidados realizados / combinados",vd.conduta,2)}
+        ${vdTextarea("orientacoes","Orientações realizadas",vd.orientacoes,2)}
+        ${vdTextarea("sinaisAlerta","Sinais de alerta orientados",vd.sinaisAlerta,2)}
+        ${vdInput("retorno","Retorno / próxima visita",vd.retorno)}
+        <div class="visit-actions">
+          <button class="btn btn-primary" type="button" id="btnGerarSOAPVisita">Gerar SOAP</button>
+          <button class="btn btn-ghost" type="button" id="btnCopiarSOAPVisita">Copiar SOAP</button>
+        </div>
+        <div class="visit-soap-grid">
+          <div class="form-field"><label>S — Subjetivo</label><textarea id="f_vd_soapS">${escapeHtml(vd.soapS)}</textarea></div>
+          <div class="form-field"><label>O — Objetivo</label><textarea id="f_vd_soapO">${escapeHtml(vd.soapO)}</textarea></div>
+          <div class="form-field"><label>A — Avaliação</label><textarea id="f_vd_soapA">${escapeHtml(vd.soapA)}</textarea></div>
+          <div class="form-field"><label>P — Plano</label><textarea id="f_vd_soapP">${escapeHtml(vd.soapP)}</textarea></div>
+        </div>
+        </div>
+      </details>
+    </div>
+  `;
+}
+function collectMedicamentosVisita(body){
+  return Array.from(body.querySelectorAll(".vd-med-row")).map(row=>({
+    nome:(row.querySelector(".vd-med-nome")?.value||"").trim(),
+    horario:(row.querySelector(".vd-med-horario")?.value||"").trim(),
+    via:(row.querySelector(".vd-med-via")?.value||"").trim(),
+    quantidade:(row.querySelector(".vd-med-quantidade")?.value||"").trim(),
+    receita:(row.querySelector(".vd-med-receita")?.value||"").trim()
+  })).filter(m=>m.nome || m.horario || m.quantidade);
+}
+function collectInsumosVisita(body){
+  return Array.from(body.querySelectorAll(".vd-insumo-row")).map(row=>({
+    item:(row.querySelector(".vd-insumo-item")?.value||"").trim(),
+    quantidade:(row.querySelector(".vd-insumo-quantidade")?.value||"").trim(),
+    suficiente:(row.querySelector(".vd-insumo-suficiente")?.value||"").trim(),
+    solicitar:(row.querySelector(".vd-insumo-solicitar")?.value||"").trim(),
+    obs:(row.querySelector(".vd-insumo-obs")?.value||"").trim()
+  })).filter(i=>i.item || i.quantidade || i.obs);
+}
+function resumoMedicamentosVisita(lista){
+  return (lista||[]).map(m=>{
+    const partes = [
+      m.nome,
+      m.horario?`horário: ${m.horario}`:"",
+      m.via?`via: ${m.via}`:"",
+      m.quantidade?`quantidade restante: ${m.quantidade}`:"",
+      m.receita?`receita verificada: ${m.receita}`:""
+    ].filter(Boolean);
+    return partes.join("; ");
+  }).filter(Boolean).join(" | ");
+}
+function resumoInsumosVisita(lista){
+  return (lista||[]).map(i=>{
+    const partes = [
+      i.item,
+      i.quantidade?`quantia: ${i.quantidade}`:"",
+      i.suficiente?`suficiente: ${i.suficiente}`:"",
+      i.solicitar?`solicitar: ${i.solicitar}`:"",
+      i.obs?`obs.: ${i.obs}`:""
+    ].filter(Boolean);
+    return partes.join("; ");
+  }).filter(Boolean).join(" | ");
+}
+function collectVisitaDomiciliarData(body){
+  const value = id => (body.querySelector("#f_vd_"+id)?.value || "").trim();
+  const medicamentosLista = collectMedicamentosVisita(body);
+  const insumosLista = collectInsumosVisita(body);
+  const escalas = lerEscalasVisita(body);
+  const escalasResultados = calcularEscalasVisita(body);
+  return {
+    tipoVisita:value("tipoVisita"), motivo:value("motivo"), queixa:value("queixa"), historia:value("historia"),
+    cuidador:value("cuidador"), parentescoCuidador:value("parentescoCuidador"), telefoneCuidador:value("telefoneCuidador"),
+    redeApoio:value("redeApoio"), responsavelPresente:value("responsavelPresente"), ambiente:value("ambiente"), riscoAmbiente:value("riscoAmbiente"),
+    idoso:value("idoso"), deambula:value("deambula"), quedaRecente:value("quedaRecente"), apoioMarcha:value("apoioMarcha"), marchaAlterada:value("marchaAlterada"),
+    feridaUmidade:value("feridaUmidade"), baixaIngesta:value("baixaIngesta"), comunicaDor:value("comunicaDor"), paliativo:value("paliativo"), confusaoAguda:value("confusaoAguda"), sintomasDepressivos:value("sintomasDepressivos"),
+    higiene:value("higiene"), rotinaSono:value("rotinaSono"), eliminacoes:value("eliminacoes"),
+    acamado:value("acamado"), mobilidade:value("mobilidade"), adl:value("adl"), consciencia:value("consciencia"), humor:value("humor"), dor:value("dor"),
+    pa:value("pa"), fc:value("fc"), fr:value("fr"), sat:value("sat"), temp:value("temp"), glicemia:value("glicemia"),
+    pele:value("pele"), feridas:value("feridas"), alimentacaoVia:value("alimentacaoVia"), dieta:value("dieta"),
+    dispositivos:value("dispositivos"), medicamentos:resumoMedicamentosVisita(medicamentosLista), insumos:resumoInsumosVisita(insumosLista),
+    medicamentosLista, insumosLista, escalas, escalasResultados,
+    cuidadorAvaliacao:value("cuidadorAvaliacao"), conduta:value("conduta"), orientacoes:value("orientacoes"),
+    sinaisAlerta:value("sinaisAlerta"), retorno:value("retorno"),
+    soapS:value("soapS"), soapO:value("soapO"), soapA:value("soapA"), soapP:value("soapP")
+  };
+}
+function normalizarTexto(s){
+  return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+}
+function limparTextoSoapGestao(txt){
+  return String(txt||"").replace(/[ \t]+\n/g,"\n").replace(/\n{3,}/g,"\n\n").trim();
+}
+function classificarRiscoVisitaDomiciliar(vd){
+  const texto = normalizarTexto(Object.values(vd).join(" "));
+  const motivos = [];
+  if(/rebaixado|confuso|dispneia|saturacao baixa|necrose|purulento|odor forte|sangramento|violencia|negligencia|hipoglicemia|febre/.test(texto)) motivos.push("sinal de gravidade ou segurança identificado");
+  if(/sim|restrito|acamado|dependencia total/.test(normalizarTexto([vd.acamado,vd.mobilidade,vd.adl].join(" ")))) motivos.push("restrição importante de mobilidade/dependência");
+  if(/insuficiente|falta|parcial|solicitar: sim/.test(normalizarTexto(vd.insumos))) motivos.push("ponto de atenção em insumos no domicílio");
+  if((vd.medicamentosLista||[]).some(m=>m.receita && m.receita!=="Sim")) motivos.push("medicação com receita não conferida ou ausente");
+  if((vd.medicamentosLista||[]).some(m=>/acab|zero|0\b|pouco|pouca|falt/.test(normalizarTexto(m.quantidade)))) motivos.push("medicação com estoque baixo ou ausente");
+  if((vd.insumosLista||[]).some(i=>i.solicitar==="Sim" || /não|nao|parcial/.test(normalizarTexto(i.suficiente)))) motivos.push("insumo precisa de reposição ou conferência");
+  if((vd.escalasResultados||[]).some(r=>r.tone==="danger")) motivos.push("escala com alerta alto/crítico");
+  if((vd.escalasResultados||[]).some(r=>r.tone==="warn")) motivos.push("escala com ponto de atenção");
+  if(/queda|escada|tapete|fiação|fiacao|umidade|mofo|barreira|risco/.test(normalizarTexto(vd.riscoAmbiente))) motivos.push("risco ambiental observado no domicílio");
+  if(/sobrecarga|exaust|cansac|sem rede/.test(normalizarTexto(vd.cuidadorAvaliacao))) motivos.push("cuidador/rede familiar com ponto de atenção");
+  const alto = motivos.some(m=>/gravidade|restrição|restricao/.test(normalizarTexto(m)));
+  return {risco:alto?"Alto":motivos.length?"Moderado":"Baixo", motivos:[...new Set(motivos)]};
+}
+function gerarSOAPVisitaDomiciliar(vd, ctx){
+  const risco = classificarRiscoVisitaDomiciliar(vd);
+  const vitais = [["PA",vd.pa],["FC",vd.fc],["FR",vd.fr],["SpO2",vd.sat],["T",vd.temp],["Glicemia capilar",vd.glicemia]].filter(x=>x[1]).map(x=>`${x[0]}: ${x[1]}`).join(" | ");
+  const escalasTexto = (vd.escalasResultados||[]).map(r=>r.texto).join("\n");
+  const escalasAlerta = (vd.escalasResultados||[]).filter(r=>r.tone==="danger"||r.tone==="warn").map(r=>r.texto).join("; ");
+  const desc = `REGISTRO DA VISITA - MÃOS AMIGAS\nVisita domiciliar operacional${ctx.paciente?` a ${ctx.paciente}`:""} para acompanhamento do cuidado, rotina do cuidador, segurança do domicílio, medicações e insumos. Tipo: ${vd.tipoVisita || "Rotina/acompanhamento"}.`;
+  return {
+    s: limparTextoSoapGestao([
+      desc,
+      "S:",
+      vd.motivo?`Motivo/objetivo: ${vd.motivo}.`:"",
+      vd.queixa?`Demanda referida: ${vd.queixa}.`:"",
+      vd.historia,
+      vd.responsavelPresente?`Responsável presente: ${vd.responsavelPresente}.`:"",
+      vd.cuidador?`Cuidador principal: ${vd.cuidador}${vd.parentescoCuidador?` (${vd.parentescoCuidador})`:""}.`:"",
+      vd.redeApoio?`Rede de apoio relatada: ${vd.redeApoio}.`:"",
+      vd.dor?`Dor/desconforto referido: ${vd.dor}.`:"",
+      vd.humor?`Humor/comportamento relatado ou observado: ${vd.humor}.`:""
+    ].filter(Boolean).join("\n")),
+    o: limparTextoSoapGestao([
+      "O:",
+      vitais,
+      ctx.local?`Local do atendimento: ${ctx.local}.`:"",
+      vd.ambiente?`Condição geral do domicílio: ${vd.ambiente}.`:"",
+      vd.riscoAmbiente?`Riscos ambientais observados: ${vd.riscoAmbiente}.`:"",
+      vd.consciencia?`Nível de consciência/comunicação: ${vd.consciencia}.`:"",
+      [vd.acamado,vd.mobilidade,vd.adl].filter(Boolean).length?`Mobilidade/dependência: ${[vd.acamado,vd.mobilidade,vd.adl].filter(Boolean).join("; ")}.`:"",
+      vd.higiene?`Higiene, banho, troca e conforto: ${vd.higiene}.`:"",
+      vd.eliminacoes?`Eliminações/fralda: ${vd.eliminacoes}.`:"",
+      vd.rotinaSono?`Sono/repouso/rotina: ${vd.rotinaSono}.`:"",
+      vd.pele?`Pele/LPP: ${vd.pele}.`:"",
+      vd.feridas?`Feridas/curativos: ${vd.feridas}.`:"",
+      vd.alimentacaoVia||vd.dieta?`Alimentação: ${[vd.alimentacaoVia,vd.dieta].filter(Boolean).join("; ")}.`:"",
+      vd.dispositivos?`Dispositivos avaliados: ${vd.dispositivos}.`:"",
+      vd.medicamentos?`Medicações no domicílio: ${vd.medicamentos}.`:"",
+      vd.insumos?`Insumos no domicílio: ${vd.insumos}.`:"",
+      escalasTexto?`Escalas aplicadas:\n${escalasTexto}`:""
+    ].filter(Boolean).join("\n")),
+    a: limparTextoSoapGestao([
+      "A:",
+      `Situação do cuidado domiciliar classificada como risco ${risco.risco.toLowerCase()} para acompanhamento operacional da Mãos Amigas${risco.motivos.length?`, por ${risco.motivos.join("; ")}`:""}.`,
+      escalasAlerta?`Alertas pelas escalas: ${escalasAlerta}.`:"",
+      vd.cuidadorAvaliacao?`Cuidador/família: ${vd.cuidadorAvaliacao}.`:"",
+      vd.medicamentos?`Ponto de controle: manter acompanhamento da organização e disponibilidade das medicações, sem alteração de prescrição. `:"",
+      vd.insumos?`Ponto de controle: acompanhar suficiência e reposição de insumos conforme combinado com responsável/coordenação.`:""
+    ].filter(Boolean).join("\n")),
+    p: limparTextoSoapGestao([
+      "P:",
+      vd.conduta?`Cuidados realizados/combinados: ${vd.conduta}.`:"",
+      vd.orientacoes?`Orientações ao paciente/cuidador: ${vd.orientacoes}.`:"",
+      vd.medicamentos?`Medicações: conferir com responsável a reposição dos itens faltantes/baixos e manter receita disponível para consulta. Não realizar ajuste de dose por este registro. `:"",
+      vd.insumos?`Insumos: providenciar/solicitar reposição conforme itens marcados e alinhar com responsável/coordenação Mãos Amigas. `:"",
+      escalasAlerta?`Escalas: manter acompanhamento dos alertas identificados e reavaliar na próxima visita conforme mudança do quadro. `:"",
+      risco.risco==="Alto"?"Risco alto: comunicar coordenação da Mãos Amigas e responsável familiar; na presença de sinal de urgência, orientar procura de serviço de saúde/urgência.":"",
+      vd.sinaisAlerta?`Sinais de alerta orientados: ${vd.sinaisAlerta}.`:"",
+      vd.retorno?`Próxima visita/retorno: ${vd.retorno}.`:"",
+      "Registro Mãos Amigas: acompanhamento domiciliar, continuidade do cuidado, segurança, rotina do cuidador e controle de insumos/medicações."
+    ].filter(Boolean).join("\n"))
+  };
+}
+function preencherSOAPVisita(body, soap){
+  body.querySelector("#f_vd_soapS").value = soap.s;
+  body.querySelector("#f_vd_soapO").value = soap.o;
+  body.querySelector("#f_vd_soapA").value = soap.a;
+  body.querySelector("#f_vd_soapP").value = soap.p;
+}
+function textoSOAPVisita(body){
+  return ["S","O","A","P"].map(k=>body.querySelector("#f_vd_soap"+k)?.value.trim()).filter(Boolean).join("\n\n");
+}
+function soapNorm(txt){
+  return String(txt||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+}
+function extrairSecoesSOAP(txt){
+  const secoes = {s:"",o:"",a:"",p:""};
+  let atual = "";
+  const preambulo = [];
+  const linhas = String(txt||"").replace(/\r/g,"").split("\n");
+  linhas.forEach(linha=>{
+    const clean = linha.trim();
+    const norm = soapNorm(clean);
+    let alvo = "";
+    if(/^(s|subjetivo)\s*[:\-–—]/.test(norm)) alvo = "s";
+    else if(/^(o|objetivo)\s*[:\-–—]/.test(norm)) alvo = "o";
+    else if(/^(a|avaliacao|avaliacao clinica)\s*[:\-–—]/.test(norm)) alvo = "a";
+    else if(/^(p|plano)\s*[:\-–—]/.test(norm)) alvo = "p";
+    if(alvo){
+      atual = alvo;
+      if(alvo==="s" && preambulo.length && !secoes.s) secoes.s = preambulo.join("\n");
+      const resto = clean.replace(/^([SOAP]|Subjetivo|Objetivo|Avalia[cç][aã]o(?: clínica)?|Plano)\s*[:\-–—]\s*/i,"").trim();
+      if(resto) secoes[atual] += (secoes[atual] ? "\n" : "") + resto;
+      return;
+    }
+    if(atual) secoes[atual] += (secoes[atual] ? "\n" : "") + linha;
+    else if(clean) preambulo.push(linha);
+  });
+  if(!Object.values(secoes).some(Boolean)) secoes.s = String(txt||"").trim();
+  return secoes;
+}
+function comTituloSOAP(titulo, texto){
+  texto = String(texto||"").trim();
+  if(!texto) return "";
+  return new RegExp("^\\s*"+titulo+"\\s*[:\\-–—]","i").test(texto) ? texto : `${titulo}:\n${texto}`;
+}
+function valorRotulado(texto, rotulos){
+  const linhas = String(texto||"").split(/\n+/);
+  const normalizados = rotulos.map(soapNorm);
+  for(const linha of linhas){
+    const norm = soapNorm(linha);
+    const achou = normalizados.find(r=>norm.startsWith(r+":") || norm.startsWith(r+" -") || norm.startsWith(r+" "));
+    if(achou){
+      const partes = linha.split(/[:\-–—]/);
+      if(partes.length > 1) return partes.slice(1).join("-").trim().replace(/\.$/,"");
+    }
+  }
+  return "";
+}
+function primeiroMatch(texto, regex){
+  const m = String(texto||"").match(regex);
+  return m ? String(m[1] || "").trim() : "";
+}
+function inferirSelectSOAP(texto, opcoes){
+  const norm = soapNorm(texto);
+  return opcoes.find(op=>norm.includes(soapNorm(op))) || "";
+}
+function parseMedicamentosSOAP(txt){
+  txt = String(txt||"").trim();
+  if(!txt) return [];
+  return txt.split(/\s*\|\s*|\n+/).map(item=>{
+    const partes = item.split(";").map(p=>p.trim()).filter(Boolean);
+    const nome = partes[0] || item.trim();
+    return {
+      nome,
+      horario: primeiroMatch(item,/hor[aá]rio(?: de administra[cç][aã]o)?\s*:\s*([^;|]+)/i),
+      via: primeiroMatch(item,/via(?: de adm)?\s*:\s*([^;|]+)/i) || "VO",
+      quantidade: primeiroMatch(item,/quantidade restante\s*:\s*([^;|]+)/i) || primeiroMatch(item,/quantos rem[eé]dios.*?:\s*([^;|]+)/i),
+      receita: primeiroMatch(item,/receita (?:verificada|conferida)\s*:\s*([^;|]+)/i) || "Não conferida"
+    };
+  }).filter(m=>m.nome);
+}
+function parseInsumosSOAP(txt){
+  txt = String(txt||"").trim();
+  if(!txt) return [];
+  return txt.split(/\s*\|\s*|\n+/).map(item=>{
+    const nome = item.split(";")[0].trim();
+    return {
+      item:nome,
+      quantidade: primeiroMatch(item,/quantia\s*:\s*([^;|]+)/i) || primeiroMatch(item,/quantidade\s*:\s*([^;|]+)/i),
+      suficiente: primeiroMatch(item,/suficiente\s*:\s*([^;|]+)/i),
+      solicitar: primeiroMatch(item,/solicitar\s*:\s*([^;|]+)/i),
+      obs: primeiroMatch(item,/obs\.?\s*:\s*([^;|]+)/i) || primeiroMatch(item,/observa[cç][aã]o\s*:\s*([^;|]+)/i)
+    };
+  }).filter(i=>i.item);
+}
+function interpretarSOAPVisitaTexto(txt){
+  const secoes = extrairSecoesSOAP(txt);
+  const todo = [secoes.s,secoes.o,secoes.a,secoes.p].join("\n");
+  const mob = valorRotulado(secoes.o,["Mobilidade/dependência","Mobilidade","Dependência"]) || valorRotulado(secoes.s,["Mobilidade/dependência","Mobilidade"]);
+  const alimentacao = valorRotulado(secoes.o,["Alimentação","Dieta"]);
+  const medsTxt = valorRotulado(secoes.o,["Medicações no domicílio","Medicações","Medicamentos no domicílio","Medicamentos"]);
+  const insumosTxt = valorRotulado(secoes.o,["Insumos no domicílio","Insumos"]);
+  const fields = {
+    tipoVisita: primeiroMatch(todo,/Tipo\s*:\s*([^\n.]+)/i),
+    motivo: valorRotulado(secoes.s,["Motivo/objetivo","Motivo","Objetivo"]),
+    queixa: valorRotulado(secoes.s,["Demanda referida","Queixa principal","Queixa"]),
+    historia: valorRotulado(secoes.s,["História e contexto da visita","História","Contexto"]),
+    responsavelPresente: valorRotulado(secoes.s,["Responsável presente"]),
+    cuidador: primeiroMatch(valorRotulado(secoes.s,["Cuidador principal"]),/^([^(.;]+)/),
+    parentescoCuidador: primeiroMatch(valorRotulado(secoes.s,["Cuidador principal"]),/\(([^)]+)\)/),
+    redeApoio: valorRotulado(secoes.s,["Rede de apoio relatada","Rede de apoio"]),
+    dor: valorRotulado(secoes.s,["Dor/desconforto referido","Dor"]),
+    humor: valorRotulado(secoes.s,["Humor/comportamento relatado ou observado","Humor/comportamento","Humor"]),
+    ambiente: valorRotulado(secoes.o,["Condição geral do domicílio","Condição do domicílio","Ambiente"]),
+    riscoAmbiente: valorRotulado(secoes.o,["Riscos ambientais observados","Riscos do ambiente","Risco ambiental"]),
+    consciencia: inferirSelectSOAP(valorRotulado(secoes.o,["Nível de consciência/comunicação","Nível de consciência","Consciência"]),["Lúcido/orientado","Sonolento","Confuso","Rebaixado"]),
+    higiene: valorRotulado(secoes.o,["Higiene, banho, troca e conforto","Higiene"]),
+    eliminacoes: valorRotulado(secoes.o,["Eliminações/fralda","Eliminações","Fralda"]),
+    rotinaSono: valorRotulado(secoes.o,["Sono/repouso/rotina","Sono","Rotina"]),
+    pele: valorRotulado(secoes.o,["Pele/LPP","Pele"]),
+    feridas: valorRotulado(secoes.o,["Feridas/curativos","Feridas","Curativos"]),
+    alimentacaoVia: inferirSelectSOAP(alimentacao,["Oral","SNE / SNG","Gastrostomia","Jejunostomia","Parenteral","Mista"]),
+    dieta: alimentacao,
+    dispositivos: valorRotulado(secoes.o,["Dispositivos avaliados","Dispositivos","Sondas e ostomias"]),
+    cuidadorAvaliacao: valorRotulado(secoes.a,["Cuidador/família","Cuidador","Família"]),
+    conduta: valorRotulado(secoes.p,["Cuidados realizados/combinados","Cuidados realizados","Conduta"]),
+    orientacoes: valorRotulado(secoes.p,["Orientações ao paciente/cuidador","Orientações realizadas","Orientações"]),
+    sinaisAlerta: valorRotulado(secoes.p,["Sinais de alerta orientados","Sinais de alerta"]),
+    retorno: valorRotulado(secoes.p,["Próxima visita/retorno","Retorno","Próxima visita"]),
+    pa: primeiroMatch(secoes.o,/(?:PA|press[aã]o arterial)\s*[:\-]?\s*([0-9]{2,3}\s*[x\/]\s*[0-9]{2,3}(?:\s*mmhg)?)/i),
+    fc: primeiroMatch(secoes.o,/(?:FC|freq(?:u[eê]ncia)? card[ií]aca)\s*[:\-]?\s*([0-9]{2,3})/i),
+    fr: primeiroMatch(secoes.o,/(?:FR|freq(?:u[eê]ncia)? respirat[oó]ria)\s*[:\-]?\s*([0-9]{1,3})/i),
+    sat: primeiroMatch(secoes.o,/(?:SpO2|SatO2|Satura[cç][aã]o)\s*[:\-]?\s*([0-9]{2,3}%?)/i),
+    temp: primeiroMatch(secoes.o,/(?:T|Temp|Temperatura)\s*[:\-]?\s*([0-9]{2}(?:[,.][0-9])?)/i),
+    glicemia: primeiroMatch(secoes.o,/(?:Glicemia capilar|Glicemia|HGT)\s*[:\-]?\s*([0-9]{2,3})/i)
+  };
+  const norm = soapNorm(todo);
+  if(/idos/.test(norm)) fields.idoso = "Sim";
+  if(/acamado|restrito ao leito|nao deambula|não deambula/.test(norm+soapNorm(mob))){
+    fields.acamado = /restrito/.test(norm+soapNorm(mob)) ? "Restrito ao leito parcialmente" : "Sim";
+    fields.mobilidade = /cadeir/.test(norm+soapNorm(mob)) ? "Cadeirante" : /restrito/.test(norm+soapNorm(mob)) ? "Restrito ao leito" : "Acamado";
+  }
+  if(/dependencia total|dependência total/.test(norm+soapNorm(mob))) fields.adl = "Dependência total";
+  else if(/dependencia parcial|dependência parcial/.test(norm+soapNorm(mob))) fields.adl = "Dependência parcial";
+  if(/deambula/.test(norm) && !/nao deambula|não deambula|acamado/.test(norm)) fields.deambula = /sozinh/.test(norm) ? "Deambula sozinho" : "Deambula com ajuda";
+  if(/queda/.test(norm)) fields.quedaRecente = "Sim";
+  if(/andador|bengala|muleta|apoio/.test(norm)) fields.apoioMarcha = "Sim";
+  if(/marcha|inseguran|medo de cair/.test(norm)) fields.marchaAlterada = "Sim";
+  if(/ferida|lpp|fralda|umidade|pele/.test(norm)) fields.feridaUmidade = "Sim";
+  if(/baixa ingesta|perda de peso|disfagia|sonda|gastrostomia|sne|sng/.test(norm)) fields.baixaIngesta = "Sim";
+  if(/nao comunica|não comunica|painad|demencia avancada|demência avançada/.test(norm)) fields.comunicaDor = "Não";
+  else if(/dor/.test(norm)) fields.comunicaDor = "Sim";
+  if(/paliativo/.test(norm)) fields.paliativo = "Sim";
+  if(/confus|sonol|agit|rebaixado|delirium/.test(norm)) fields.confusaoAguda = "Sim";
+  if(/triste|isolad|apat|perda de interesse|gds/.test(norm)) fields.sintomasDepressivos = "Sim";
+  return {
+    soap:{s:comTituloSOAP("S",secoes.s),o:comTituloSOAP("O",secoes.o),a:comTituloSOAP("A",secoes.a),p:comTituloSOAP("P",secoes.p)},
+    fields,
+    medicamentosLista: parseMedicamentosSOAP(medsTxt),
+    insumosLista: parseInsumosSOAP(insumosTxt)
+  };
+}
+function aplicarSOAPInterpretado(body, parsed, opts={}){
+  const overwrite = opts.overwrite !== false;
+  const set = (id,value)=>{
+    if(value===undefined || value===null || value==="") return;
+    const el = body.querySelector("#f_vd_"+id);
+    if(!el) return;
+    if(!overwrite && el.value.trim()) return;
+    el.value = value;
+    el.dispatchEvent(new Event("input",{bubbles:true}));
+    el.dispatchEvent(new Event("change",{bubbles:true}));
+  };
+  Object.entries(parsed.fields || {}).forEach(([id,value])=>set(id,value));
+  if(parsed.medicamentosLista?.length){
+    const bodyMed = body.querySelector("#vdMedBody");
+    if(bodyMed && (overwrite || !bodyMed.querySelector(".vd-med-row"))) bodyMed.innerHTML = parsed.medicamentosLista.map(visitaMedRowHtml).join("");
+  }
+  if(parsed.insumosLista?.length){
+    const bodyInsumo = body.querySelector("#vdInsumoBody");
+    if(bodyInsumo && (overwrite || !bodyInsumo.querySelector(".vd-insumo-row"))) bodyInsumo.innerHTML = parsed.insumosLista.map(visitaInsumoRowHtml).join("");
+  }
+  const temSoap = ["S","O","A","P"].some(k=>body.querySelector("#f_vd_soap"+k)?.value.trim());
+  if(overwrite || !temSoap) preencherSOAPVisita(body, parsed.soap);
+  atualizarEscalasVisita(body);
+  body.querySelectorAll(".visit-accordion").forEach(d=>d.open = true);
+}
+function interpretarSOAPNoFormulario(body, texto, opts={}){
+  texto = String(texto||"").trim();
+  if(!texto){ if(!opts.silent) alert("Cole o SOAP primeiro."); return false; }
+  aplicarSOAPInterpretado(body, interpretarSOAPVisitaTexto(texto), opts);
+  if(!opts.silent) alert("SOAP interpretado. Confira os campos e clique em Salvar.");
+  return true;
+}
+function copiarTextoGestao(txt,msg){
+  if(!txt){ alert("Gere ou preencha o SOAP antes de copiar."); return; }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(()=>alert(msg||"Copiado.")).catch(()=>alert("Não foi possível copiar. Texto:\n\n"+txt));
+  }else{
+    alert("Texto:\n\n"+txt);
+  }
+}
+function visitaForm(existing){
+  const v = existing || {data:"",horario:"",profissional:"",paciente:"",tipo:"Avaliação inicial",status:"Agendada",valorCobrado:"",valorPago:"",obs:""};
+  return `
+    <div class="form-grid">
+      <div class="form-field"><label>Data da visita</label><input id="f_data" type="date" value="${v.data}"></div>
+      <div class="form-field"><label>Horário</label><input id="f_horario" type="time" value="${v.horario}"></div>
+      <div class="form-field"><label>Profissional <span class="badge-auto">auto-preenche</span></label>
+        <select id="f_prof"><option value="">Selecione...</option>${profOptions(v.profissional)}</select>
+      </div>
+      <div class="form-field"><label>Paciente <span class="badge-auto">auto-preenche</span></label>
+        <select id="f_pac"><option value="">Selecione...</option>${pacOptions(v.paciente)}</select>
+      </div>
+      <div class="form-field"><label>Tipo de visita</label>
+        <select id="f_tipo">
+          ${["Avaliação inicial","Acompanhamento","Curativo","Orientação familiar","Outro"].map(t=>`<option ${v.tipo===t?"selected":""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-field"><label>Status</label>
+        <select id="f_status">
+          ${["Agendada","Realizada","Cancelada"].map(t=>`<option ${v.status===t?"selected":""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-field"><label>Valor cobrado (R$)</label><input id="f_cobrado" type="number" step="0.01" value="${v.valorCobrado}"></div>
+      <div class="form-field"><label>Valor pago ao profissional (R$)</label><input id="f_pago" type="number" step="0.01" value="${v.valorPago}"></div>
+      <div class="form-field full"><label>Observações</label><textarea id="f_obs" rows="2">${escapeHtml(v.obs)}</textarea></div>
+      ${visitaDomiciliarHtml(v.vd)}
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn btn-primary" id="saveBtn">Salvar</button>
+    </div>
+  `;
+}
+function openVisitaModal(idx){
+  const existing = idx!==undefined ? state.visits[idx] : null;
+  openModal(existing?"Editar visita":"Nova visita", visitaForm(existing), body=>{
+    inicializarEscalasVisita(body);
+    body.querySelector("#cancelBtn").onclick = closeModal;
+    body.querySelector("#btnGerarSOAPVisita").onclick = ()=>{
+      const paciente = body.querySelector("#f_pac").value;
+      const patient = state.patients.find(p=>p.nome===paciente);
+      const soap = gerarSOAPVisitaDomiciliar(collectVisitaDomiciliarData(body), {
+        paciente,
+        local: patient ? patient.local : "",
+        profissional: body.querySelector("#f_prof").value,
+        data: body.querySelector("#f_data").value,
+        horario: body.querySelector("#f_horario").value
+      });
+      preencherSOAPVisita(body, soap);
+    };
+    body.querySelector("#btnCopiarSOAPVisita").onclick = ()=>copiarTextoGestao(textoSOAPVisita(body),"SOAP copiado.");
+    body.querySelector("#btnInterpretarSOAPVisita").onclick = ()=>interpretarSOAPNoFormulario(body, body.querySelector("#f_vd_importSoap").value, {overwrite:true});
+    body.querySelector("#btnColarSOAPVisita").onclick = async ()=>{
+      try{
+        const txt = await navigator.clipboard.readText();
+        body.querySelector("#f_vd_importSoap").value = txt;
+        interpretarSOAPNoFormulario(body, txt, {overwrite:true});
+      }catch(err){
+        alert("Não consegui ler a área de transferência. Cole o SOAP manualmente no campo.");
+      }
+    };
+    const soapSalvo = textoSOAPVisita(body);
+    if(soapSalvo && !body.querySelector("#f_vd_motivo").value && !body.querySelector("#f_vd_pa").value){
+      interpretarSOAPNoFormulario(body, soapSalvo, {overwrite:false,silent:true});
+    }
+    body.querySelector("#saveBtn").onclick = ()=>{
+      const rec = {
+        id: existing ? existing.id : state.nextVisitId++,
+        data: body.querySelector("#f_data").value,
+        horario: body.querySelector("#f_horario").value,
+        profissional: body.querySelector("#f_prof").value,
+        paciente: body.querySelector("#f_pac").value,
+        tipo: body.querySelector("#f_tipo").value,
+        status: body.querySelector("#f_status").value,
+        valorCobrado: body.querySelector("#f_cobrado").value===""?"":parseFloat(body.querySelector("#f_cobrado").value),
+        valorPago: body.querySelector("#f_pago").value===""?"":parseFloat(body.querySelector("#f_pago").value),
+        obs: body.querySelector("#f_obs").value.trim(),
+        vd: collectVisitaDomiciliarData(body)
+      };
+      if(idx!==undefined) state.visits[idx] = rec;
+      else state.visits.push(rec);
+      save(); closeModal(); renderAll();
+    };
+  }, true);
+}
+App.editVisita = idx=> openVisitaModal(idx);
+App.deleteVisita = idx=>{
+  if(confirm("Excluir esta visita?")){ state.visits.splice(idx,1); save(); renderAll(); }
+};
+document.getElementById("btnAddVisita").addEventListener("click", ()=>openVisitaModal());
+document.getElementById("searchVisitas").addEventListener("input", renderVisitas);
+
+/* ============================= BACKUP ============================= */
+document.getElementById("btnExport").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "backup-plantoes-visitas-"+todayISO()+".json";
+  a.click();
+});
+document.getElementById("btnImport").addEventListener("click", ()=> document.getElementById("fileImport").click());
+document.getElementById("fileImport").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed.professionals || !parsed.shifts){ alert("Arquivo inválido."); return; }
+      if(confirm("Importar este backup substituirá todos os dados atuais. Continuar?")){
+        state = parsed; save(); renderAll();
+      }
+    }catch(err){ alert("Não foi possível ler o arquivo."); }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+/* ============================= EXPORTAR SERVIÇO ============================= */
+function renderExportListPlantoes(){
+  const term = (document.getElementById("searchExportPlantoes").value||"").toLowerCase();
+  const el = document.getElementById("exportListPlantoes");
+  let rows = state.shifts.map((s,idx)=>({s,idx})).filter(({s})=>
+    (s.profissional||"").toLowerCase().includes(term) || (s.paciente||"").toLowerCase().includes(term)
+  );
+  rows = rows.slice().sort((a,b)=> (b.s.data||"").localeCompare(a.s.data||""));
+  if(rows.length===0){
+    el.innerHTML = `<div class="export-empty">Nenhum plantão encontrado.</div>`;
+    return;
+  }
+  el.innerHTML = rows.map(({s,idx})=>`
+    <div class="export-item">
+      <div class="export-item-info">
+        <div class="export-item-title">${escapeHtml(s.paciente||"Paciente não definido")} · ${escapeHtml(s.profissional||"—")}</div>
+        <div class="export-item-sub">${fmtDate(s.data)} · ${s.horaInicio||"—"}–${s.horaFim||"—"} · ${brl(s.valorCobrado)}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="App.openCardPlantao(${idx})">Gerar cartão</button>
+    </div>
+  `).join("");
+}
+function renderExportListVisitas(){
+  const term = (document.getElementById("searchExportVisitas").value||"").toLowerCase();
+  const el = document.getElementById("exportListVisitas");
+  let rows = state.visits.map((v,idx)=>({v,idx})).filter(({v})=>
+    (v.profissional||"").toLowerCase().includes(term) || (v.paciente||"").toLowerCase().includes(term)
+  );
+  rows = rows.slice().sort((a,b)=> (b.v.data||"").localeCompare(a.v.data||""));
+  if(rows.length===0){
+    el.innerHTML = `<div class="export-empty">Nenhuma visita encontrada.</div>`;
+    return;
+  }
+  el.innerHTML = rows.map(({v,idx})=>`
+    <div class="export-item">
+      <div class="export-item-info">
+        <div class="export-item-title">${escapeHtml(v.paciente||"Paciente não definido")} · ${escapeHtml(v.profissional||"—")}</div>
+        <div class="export-item-sub">${v.data?fmtDate(v.data):"Sem data"} ${v.horario?"· "+v.horario:""} · ${escapeHtml(v.tipo||"—")}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="App.openCardVisita(${idx})">Gerar cartão</button>
+    </div>
+  `).join("");
+}
+function renderExportar(){ renderExportListPlantoes(); renderExportListVisitas(); }
+document.getElementById("searchExportPlantoes").addEventListener("input", renderExportListPlantoes);
+document.getElementById("searchExportVisitas").addEventListener("input", renderExportListVisitas);
+
+const pagtoLabel = {Pendente:"pill-warn",Pago:"pill-ok"};
+const recebLabel = {Pendente:"pill-warn",Recebido:"pill-ok"};
+const visitStatusLabel = {Agendada:"pill-neutral",Realizada:"pill-ok",Cancelada:"pill-danger"};
+
+function buildShiftCardHtml(s){
+  const patient = state.patients.find(p=>p.nome===s.paciente);
+  const prof = state.professionals.find(p=>p.nome===s.profissional);
+  const local = patient ? patient.local : "—";
+  const horas = (s.data && s.horaInicio && s.horaFim) ? shiftDateTimes(s) : null;
+  const horasTxt = horas ? (((horas.end-horas.start)/3600000).toFixed(1)+"h") : "—";
+  return `
+    <div class="sc-header">
+      <div class="sc-kind">🕐 Plantão de Cuidados</div>
+      <div class="sc-date-badge">${fmtDate(s.data)}</div>
+    </div>
+    <div class="sc-body">
+      <div class="sc-patient">${escapeHtml(s.paciente||"Paciente não definido")}</div>
+      <div class="sc-patient-sub">${escapeHtml(local)}</div>
+      <div class="sc-row"><span class="sc-label">Cuidador(a)</span><span class="sc-value">${escapeHtml(s.profissional||"—")}</span></div>
+      ${prof&&prof.telefone?`<div class="sc-row"><span class="sc-label">Contato</span><span class="sc-value mono">${escapeHtml(prof.telefone)}</span></div>`:""}
+      <div class="sc-row"><span class="sc-label">Horário</span><span class="sc-value mono">${s.horaInicio||"—"}–${s.horaFim||"—"} (${horasTxt})</span></div>
+      <div class="sc-divider"></div>
+      <div class="sc-money-row"><span class="sc-money-label">Valor do plantão</span><span class="sc-money-value">${brl(s.valorCobrado)}</span></div>
+      <div class="sc-row"><span class="sc-label">Repasse ao cuidador</span><span class="sc-value mono">${brl(s.valorPago)}</span></div>
+      <div class="sc-status-pills">
+        <span class="pill ${pagtoLabel[s.statusPagto]||'pill-muted'}">Pagto: ${escapeHtml(s.statusPagto||"—")}</span>
+        <span class="pill ${recebLabel[s.statusReceb]||'pill-muted'}">Receb: ${escapeHtml(s.statusReceb||"—")}</span>
+      </div>
+    </div>
+    <div class="sc-footer">Plantões &amp; Visitas — Gestão de Cuidadores</div>
+  `;
+}
+function buildVisitCardHtml(v){
+  const patient = state.patients.find(p=>p.nome===v.paciente);
+  const prof = state.professionals.find(p=>p.nome===v.profissional);
+  const local = patient ? patient.local : "—";
+  return `
+    <div class="sc-header">
+      <div class="sc-kind">🏠 Visita Domiciliar</div>
+      <div class="sc-date-badge">${v.data?fmtDate(v.data):"Sem data"}</div>
+    </div>
+    <div class="sc-body">
+      <div class="sc-patient">${escapeHtml(v.paciente||"Paciente não definido")}</div>
+      <div class="sc-patient-sub">${escapeHtml(local)}</div>
+      <div class="sc-row"><span class="sc-label">Cuidador(a)</span><span class="sc-value">${escapeHtml(v.profissional||"—")}</span></div>
+      ${prof&&prof.telefone?`<div class="sc-row"><span class="sc-label">Contato</span><span class="sc-value mono">${escapeHtml(prof.telefone)}</span></div>`:""}
+      <div class="sc-row"><span class="sc-label">Horário</span><span class="sc-value mono">${v.horario||"—"}</span></div>
+      <div class="sc-row"><span class="sc-label">Tipo de visita</span><span class="sc-value">${escapeHtml(v.tipo||"—")}</span></div>
+      <div class="sc-divider"></div>
+      <div class="sc-money-row"><span class="sc-money-label">Valor da visita</span><span class="sc-money-value">${brl(v.valorCobrado)}</span></div>
+      <div class="sc-row"><span class="sc-label">Repasse ao profissional</span><span class="sc-value mono">${brl(v.valorPago)}</span></div>
+      <div class="sc-status-pills">
+        <span class="pill ${visitStatusLabel[v.status]||'pill-muted'}">${escapeHtml(v.status||"—")}</span>
+      </div>
+    </div>
+    <div class="sc-footer">Plantões &amp; Visitas — Gestão de Cuidadores</div>
+  `;
+}
+function shiftShareText(s){
+  const patient = state.patients.find(p=>p.nome===s.paciente);
+  const local = patient ? patient.local : "—";
+  const lines = [
+    "🕐 *Plantão de Cuidados*",
+    `📅 ${fmtDate(s.data)} · ${s.horaInicio||"—"}–${s.horaFim||"—"}`,
+    `👤 Paciente: ${s.paciente||"—"}`,
+    `📍 Local: ${local}`,
+    `🧑‍⚕️ Cuidador(a): ${s.profissional||"—"}`,
+    `💰 Valor do plantão: ${brl(s.valorCobrado)}`,
+    `💵 Repasse ao cuidador: ${brl(s.valorPago)}`,
+    `Status: pagamento ${s.statusPagto||"—"} · recebimento ${s.statusReceb||"—"}`
+  ];
+  return lines.join("\n");
+}
+function visitShareText(v){
+  const patient = state.patients.find(p=>p.nome===v.paciente);
+  const local = patient ? patient.local : "—";
+  const lines = [
+    "🏠 *Visita Domiciliar*",
+    `📅 ${v.data?fmtDate(v.data):"Sem data"}${v.horario?" · "+v.horario:""}`,
+    `👤 Paciente: ${v.paciente||"—"}`,
+    `📍 Local: ${local}`,
+    `🧑‍⚕️ Cuidador(a): ${v.profissional||"—"}`,
+    `Tipo: ${v.tipo||"—"}`,
+    `💰 Valor da visita: ${brl(v.valorCobrado)}`,
+    `Status: ${v.status||"—"}`
+  ];
+  return lines.join("\n");
+}
+function openCardModal(kind, cardHtml, shareText, filenamePrefix){
+  const html = `
+    <div class="service-card-wrap">
+      <div class="service-card" id="serviceCardCanvas">${cardHtml}</div>
+    </div>
+    <div class="card-actions">
+      <button class="btn btn-primary" id="btnDownloadCard">⬇ Baixar imagem</button>
+      <button class="btn btn-ghost" id="btnCopyCard">📋 Copiar texto</button>
+      <button class="btn btn-ghost" id="cancelBtn">Fechar</button>
+    </div>
+  `;
+  openModal("Cartão de serviço", html, body=>{
+    body.querySelector("#cancelBtn").onclick = closeModal;
+    body.querySelector("#btnCopyCard").onclick = ()=>{
+      navigator.clipboard.writeText(shareText).then(()=>{
+        const btn = body.querySelector("#btnCopyCard");
+        const old = btn.textContent; btn.textContent = "✓ Copiado!";
+        setTimeout(()=> btn.textContent = old, 1500);
+      }).catch(()=> alert("Não foi possível copiar. Texto:\n\n"+shareText));
+    };
+    body.querySelector("#btnDownloadCard").onclick = ()=>{
+      const node = body.querySelector("#serviceCardCanvas");
+      if(typeof html2canvas === "undefined"){ alert("Não foi possível carregar o gerador de imagem (sem conexão com a internet)."); return; }
+      html2canvas(node, {backgroundColor:"#ffffff", scale:2}).then(canvas=>{
+        const link = document.createElement("a");
+        link.download = filenamePrefix+"-"+todayISO()+".png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    };
+  });
+}
+App.openCardPlantao = idx=>{
+  const s = state.shifts[idx];
+  openCardModal("plantao", buildShiftCardHtml(s), shiftShareText(s), "plantao-"+(s.paciente||"servico").replace(/\s+/g,"_"));
+};
+App.openCardVisita = idx=>{
+  const v = state.visits[idx];
+  openCardModal("visita", buildVisitCardHtml(v), visitShareText(v), "visita-"+(v.paciente||"servico").replace(/\s+/g,"_"));
+};
+
+/* ============================= RENDER ALL ============================= */
+function renderAll(){
+  renderDashboard();
+  renderCalendario();
+  renderProfissionais();
+  renderPacientes();
+  renderPlantoes();
+  renderVisitas();
+  renderExportar();
+  renderPlantaoCalculator();
+}
+renderAll();
+initCloudSync();
+
+})();
+</script>
+</body>
+</html>

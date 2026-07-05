@@ -1,0 +1,55 @@
+VERCEL COM SINCRONIZACAO PC/CELULAR
+
+Da para usar Vercel sim.
+Para a sincronizacao ficar boa, esta versao usa Vercel Functions + Redis/Upstash.
+
+ARQUIVOS IMPORTANTES
+
+- index.html
+- api/maos-amigas-sync.mjs
+- package.json
+
+PASSOS NO VERCEL
+
+1. Suba o conteudo da pasta outputs para o GitHub.
+
+2. No Vercel, clique em Add New > Project e importe esse repositorio.
+
+3. Se o conteudo de outputs estiver na raiz do repositorio:
+   - Framework Preset: Other
+   - Build Command: vazio
+   - Output Directory: .
+
+4. Se a pasta outputs estiver dentro do repositorio:
+   - Root Directory: outputs
+   - Framework Preset: Other
+   - Build Command: vazio
+   - Output Directory: .
+
+5. No projeto da Vercel, abra Storage e crie/conecte um Redis/Upstash.
+   A Vercel/Upstash deve criar variaveis parecidas com:
+   - UPSTASH_REDIS_REST_URL
+   - UPSTASH_REDIS_REST_TOKEN
+
+   A funcao tambem aceita os nomes antigos:
+   - KV_REST_API_URL
+   - KV_REST_API_TOKEN
+
+6. Em Settings > Environment Variables, crie tambem:
+   MAOS_AMIGAS_SYNC_TOKEN
+
+   Use um codigo forte e coloque o mesmo codigo dentro do sistema no PC e no celular.
+
+7. Faca novo deploy.
+
+8. Abra o site do Vercel.
+   No Dashboard > Configurar sincronizacao:
+   - No aparelho que tem os dados certos: Enviar para nuvem
+   - No outro aparelho: Baixar da nuvem
+
+OBSERVACAO
+
+GitHub Pages nao roda API.
+Netlify roda pela pasta netlify/functions.
+Vercel roda pela pasta api.
+
